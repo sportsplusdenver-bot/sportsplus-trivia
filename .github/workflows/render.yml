@@ -29,8 +29,9 @@ jobs:
       - name: Find the newest job
         id: job
         run: |
-          f=$(git diff --name-only HEAD~1 HEAD -- 'jobs/*/trivia.json' | sort | tail -1 || true)
-          if [ -z "$f" ]; then f=$(ls -1 jobs/*/trivia.json | sort | tail -1); fi
+          f=$(git diff --name-only --diff-filter=AM HEAD~1 HEAD -- 'jobs/*/trivia.json' 2>/dev/null | sort | tail -1 || true)
+          if [ -z "$f" ]; then f=$(ls -1 jobs/*/trivia.json 2>/dev/null | sort | tail -1 || true); fi
+          if [ -z "$f" ]; then echo "No jobs/<name>/trivia.json to render; nothing to do."; exit 0; fi
           name=$(basename "$(dirname "$f")")
           case "$name" in *[!A-Za-z0-9._-]*|"") echo "bad job name: $name"; exit 1;; esac
           echo "file=$f" >> "$GITHUB_OUTPUT"
@@ -38,12 +39,14 @@ jobs:
           echo "Rendering $f"
 
       - name: Install ffmpeg, emoji font, Pillow, numpy
+        if: steps.job.outputs.name != ''
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg fonts-noto-color-emoji > /dev/null
           python3 -m pip install --quiet --break-system-packages pillow numpy
 
       - name: Render slides and Short
+        if: steps.job.outputs.name != ''
         env:
           JOB_FILE: ${{ steps.job.outputs.file }}
           JOB_NAME: ${{ steps.job.outputs.name }}
@@ -53,6 +56,7 @@ jobs:
           ls -la "out/$JOB_NAME"
 
       - name: Publish to the posts branch
+        if: steps.job.outputs.name != ''
         env:
           JOB_NAME: ${{ steps.job.outputs.name }}
           TOKEN: ${{ github.token }}
