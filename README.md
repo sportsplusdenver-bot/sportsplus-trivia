@@ -2,7 +2,7 @@
 
 This branch holds the renderer that turns a day's trivia question into post files:
 
-- `render_slides.py` makes the TikTok slides (1080×1920), the Instagram/Facebook slides (1080×1350) and the animated YouTube Short.
+- `render_slides.py` makes the TikTok slides (1080×1920), the Instagram/Facebook slides (1080×1350) and the animated YouTube Short. The workflow also saves a JPEG copy of every slide, because TikTok photo posts reject PNG.
 - `fonts/` holds TeX Gyre Heros, the free Helvetica-style stand-in for the brand's Helvetica Neue.
 - `brand/` holds the Sports Plus logos from the brand book.
 - `.github/workflows/render.yml` runs the renderer on GitHub whenever a new `jobs/<date>/trivia.json` is pushed here, then rewrites the `posts` branch as a single commit with that day's files plus the last 7 days of folders.

@@ -54,6 +54,8 @@ jobs:
         run: |
           python3 render_slides.py "$JOB_FILE" "out/$JOB_NAME" --video
           cp "$JOB_FILE" "out/$JOB_NAME/trivia.json"
+          # TikTok (and Instagram) photo posts only accept JPEG/WebP: save a JPEG copy of every slide
+          python3 -c "import glob,sys;from PIL import Image;[Image.open(f).convert('RGB').save(f[:-4]+'.jpg',quality=92,subsampling=0) for f in glob.glob(sys.argv[1]+'/*slide*.png')]" "out/$JOB_NAME"
           ls -la "out/$JOB_NAME"
 
       - name: Publish to the posts branch

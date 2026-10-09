@@ -1,0 +1,9 @@
+{
+  "sport": "Cycling",
+  "date": "2026-10-09",
+  "question": "With five-time defending champ Tadej Pogačar out injured, Il Lombardia rolls Saturday. Eddy Merckx won a record 19 Monuments. How many of those officially came at Lombardia?",
+  "choices": ["7", "5", "4", "2"],
+  "answer": "D: Just 2",
+  "answer_detail": "Merckx won in 1971 and 1972 and crossed the line first again in 1973, but a positive doping test erased that one and handed the win to Felice Gimondi. Coppi and Pogačar share the record with 5.",
+  "source": "Wikipedia; Cyclingnews"
+}
