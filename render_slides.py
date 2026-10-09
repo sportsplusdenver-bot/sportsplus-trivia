@@ -4,7 +4,8 @@
 Usage:
     python3 render_slides.py trivia.json OUT_DIR [--format both|tiktok|instagram] [--video]
 
---video also writes short.mp4: an animated 1080x1920 YouTube Short, usually 35-45 seconds
+--video also writes short.mp4: an animated 1080x1920 YouTube Short, usually 35-45 seconds,
+and short_tiktok.mp4: the same video ending on a "Follow" card instead of "Subscribe"
 (hook, question, choices with a 5-second countdown, reveal with confetti, answer, subscribe card).
 Screen times scale with the amount of text, at about 3 words per second.
 Needs ffmpeg with libx264.
@@ -363,6 +364,7 @@ def slide_answer(data, date_str):
 #   reveal    1.5 s: wrong picks dim, right pick turns mint with a check, confetti
 #   answer    headline slams, backstory slides in (4 s + ~3 words/s, 9-20 s)
 #   outro     3.5 s subscribe card: button pops, a hand taps it, it flips to "Subscribed"
+#             (TikTok version: "Follow" flips to "Following")
 # Audio is synthesized here (beat, whooshes, ticks, riser, chime): no music rights needed.
 # ----------------------------------------------------------------------------
 
@@ -659,7 +661,7 @@ def _synth_audio(path, total, reveal_has_choices=True):
         w.writeframes(pcm.tobytes())
 
 
-def make_video(data, date_str, out):
+def make_video(data, date_str, out, platform="youtube"):
     import math
     import shutil
     import subprocess
@@ -824,8 +826,16 @@ def make_video(data, date_str, out):
         ImageDraw.Draw(im).text((x, bh_ // 2 + 2), label, font=bf_, fill=fg, anchor="lm")
         return im
 
-    btn_off = _button("Subscribe", _emoji_img("\U0001F514", 80), PINK, INK)
-    btn_on = _button("Subscribed", _check_badge(84), CREAM, INK, outline=INK)
+    if platform == "tiktok":
+        plus = Image.new("RGBA", (72, 72), (0, 0, 0, 0))
+        pd = ImageDraw.Draw(plus)
+        pd.rounded_rectangle([27, 4, 45, 68], radius=6, fill=INK)
+        pd.rounded_rectangle([4, 27, 68, 45], radius=6, fill=INK)
+        btn_off = _button("Follow", plus, PINK, INK)
+        btn_on = _button("Following", _check_badge(84), CREAM, INK, outline=INK)
+    else:
+        btn_off = _button("Subscribe", _emoji_img("\U0001F514", 80), PINK, INK)
+        btn_on = _button("Subscribed", _check_badge(84), CREAM, INK, outline=INK)
     btn_cy = 860
     confetti_sub = _confetti(31, W // 2 + 120, btn_cy, 45, spread=700, up=1200, cols=[PINK, MINT, CREAM])
     confetti_ans = _confetti(23, W // 2, ay + 40, 110, spread=1100, up=1700, cols=[INK, CREAM, WHITE])
@@ -1031,7 +1041,8 @@ def make_video(data, date_str, out):
     tmpdir = tempfile.mkdtemp(prefix="short_")
     wav = os.path.join(tmpdir, "audio.wav")
     _synth_audio(wav, T_END)
-    mp4 = os.path.join(out, "short.mp4")
+    name = "short_tiktok.mp4" if platform == "tiktok" else "short.mp4"
+    mp4 = os.path.join(out, name)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
            "-i", wav, "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
@@ -1045,8 +1056,8 @@ def make_video(data, date_str, out):
         proc.wait()
     shutil.rmtree(tmpdir, ignore_errors=True)
     if proc.returncode:
-        raise SystemExit("ffmpeg failed to write short.mp4")
-    return "short.mp4"
+        raise SystemExit(f"ffmpeg failed to write {name}")
+    return name
 
 
 def main():
@@ -1102,7 +1113,8 @@ def main():
             x += im.width + pad
     prev.save(os.path.join(out, "preview.png"))
     if want_video:
-        written.append(make_video(data, date_str, out))
+        written.append(make_video(data, date_str, out, "youtube"))
+        written.append(make_video(data, date_str, out, "tiktok"))
     print("wrote", ", ".join(written), "to", out)
 
 
