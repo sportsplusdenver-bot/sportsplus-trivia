@@ -1,0 +1,68 @@
+# Renders the daily trivia post whenever a new jobs/<name>/trivia.json is pushed to the
+# kit branch, then replaces the posts branch with just that day's files:
+#   <name>/slide1_question.png ... short.mp4, preview.png, trivia.json
+# The daily Claude task polls the posts branch, then schedules the files in Metricool.
+name: Render trivia post
+
+on:
+  push:
+    branches: [kit]
+    paths: ["jobs/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render-trivia
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Find the newest job
+        id: job
+        run: |
+          f=$(git diff --name-only HEAD~1 HEAD -- 'jobs/*/trivia.json' | sort | tail -1 || true)
+          if [ -z "$f" ]; then f=$(ls -1 jobs/*/trivia.json | sort | tail -1); fi
+          name=$(basename "$(dirname "$f")")
+          case "$name" in *[!A-Za-z0-9._-]*|"") echo "bad job name: $name"; exit 1;; esac
+          echo "file=$f" >> "$GITHUB_OUTPUT"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "Rendering $f"
+
+      - name: Install ffmpeg, emoji font, Pillow, numpy
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-noto-color-emoji > /dev/null
+          python3 -m pip install --quiet --break-system-packages pillow numpy
+
+      - name: Render slides and Short
+        env:
+          JOB_FILE: ${{ steps.job.outputs.file }}
+          JOB_NAME: ${{ steps.job.outputs.name }}
+        run: |
+          python3 render_slides.py "$JOB_FILE" "out/$JOB_NAME" --video
+          cp "$JOB_FILE" "out/$JOB_NAME/trivia.json"
+          ls -la "out/$JOB_NAME"
+
+      - name: Publish to the posts branch
+        env:
+          JOB_NAME: ${{ steps.job.outputs.name }}
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cd out
+          git init -q
+          git checkout -q -b posts
+          git config user.name "Sports Plus Trivia"
+          git config user.email "sportsplusdenver-bot@users.noreply.github.com"
+          git add .
+          git commit -q -m "Rendered $JOB_NAME"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${REPO}.git" posts
