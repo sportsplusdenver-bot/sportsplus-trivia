@@ -1,5 +1,6 @@
 # Renders the daily trivia post whenever a new jobs/<name>/trivia.json is pushed to the
-# kit branch, then replaces the posts branch with just that day's files:
+# kit branch, then rewrites the posts branch as one commit holding that job's files
+# plus the previous 7 days' folders:
 #   <name>/slide1_question.png ... short.mp4, preview.png, trivia.json
 # The daily Claude task polls the posts branch, then schedules the files in Metricool.
 name: Render trivia post
@@ -62,6 +63,17 @@ jobs:
           TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
         run: |
+          # Keep the last 7 days of folders so a post's links keep working if renders overlap.
+          mkdir -p keep
+          if git fetch -q --depth 1 origin posts 2>/dev/null; then git archive FETCH_HEAD | tar -x -C keep; fi
+          cutoff=$(date -u -d '7 days ago' +%Y-%m-%d)
+          for d in keep/*/; do
+            [ -d "$d" ] || continue
+            n=$(basename "$d")
+            [ "$n" = "$JOB_NAME" ] && continue
+            [[ "${n:0:10}" < "$cutoff" ]] && continue
+            mv "$d" out/
+          done
           cd out
           git init -q
           git checkout -q -b posts
