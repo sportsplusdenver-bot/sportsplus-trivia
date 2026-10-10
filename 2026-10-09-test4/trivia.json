@@ -1,0 +1,9 @@
+{
+  "sport": "Baseball",
+  "date": "2026-10-08",
+  "question": "The Pittsburgh Pirates have been playing since 1882, nearly 22,000 games. After all of that, how many games over .500 is their all-time record?",
+  "choices": ["2 games", "47 games", "312 games", "They're under .500"],
+  "answer": "A: Just 2 games",
+  "answer_detail": "Through the 2026 season they're 10,992-10,990. They actually slipped under .500 in July 2025 for the first time since 1903, then an 82-80 season this year pulled them back over.",
+  "source": "Baseball-Reference"
+}
