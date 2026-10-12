@@ -1,0 +1,9 @@
+{
+  "sport": "Baseball",
+  "date": "2026-10-12",
+  "question": "Oct. 12, 1929, World Series Game 4: the Cubs led the Philadelphia A's 8-0 heading to the bottom of the 7th. How many runs did the A's score in that one inning?",
+  "choices": ["8 runs", "9 runs", "10 runs", "12 runs"],
+  "answer": "C: 10 runs",
+  "answer_detail": "Cubs center fielder Hack Wilson lost two flies in the sun, one becoming Mule Haas's inside-the-park homer. The A's won 10-8, still the biggest World Series comeback, and 10 runs remains the WS one-inning record (tied by 1968's Tigers).",
+  "source": "Baseball-Reference, SABR"
+}
