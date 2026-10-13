@@ -1,0 +1,9 @@
+{
+  "sport": "Football",
+  "date": "2026-10-13",
+  "question": "41 years ago today, Phil Simms threw for 513 yards, still the Giants' single-game record. Eli Manning fell 3 yards short in 2012. How did Simms' record day end?",
+  "choices": ["Giants won by 21", "Giants won in overtime", "Bengals won 35-30", "Ended in a 30-30 tie"],
+  "answer": "C: Bengals won 35-30",
+  "answer_detail": "Simms went 40-of-62 at Cincinnati on Oct. 13, 1985, but threw just one TD and two picks. Of the three 500-yard passing games in Giants history, it's the only loss.",
+  "source": "Giants.com"
+}
