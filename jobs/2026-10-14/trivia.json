@@ -1,0 +1,9 @@
+{
+  "sport": "Basketball",
+  "date": "2026-10-14",
+  "question": "Chris Ford hit the NBA's first 3-pointer 47 years ago this week. That 1979-80 season, the Atlanta Hawks won their division. How many threes did they make ALL season?",
+  "choices": ["57", "13", "102", "148"],
+  "answer": "B: Just 13",
+  "answer_detail": "Atlanta made 13 threes in 82 games and still went 50-32 to win the Central Division. The average team that year made 64. Today, teams often hit 13 in a single night.",
+  "source": "Basketball-Reference"
+}
