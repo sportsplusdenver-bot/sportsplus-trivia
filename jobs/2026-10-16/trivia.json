@@ -1,0 +1,11 @@
+{
+  "sport": "Cycling",
+  "date": "2026-10-16",
+  "question": "Albert Bourlon, who died on this date in 2013, holds the Tour de France record for the longest solo breakaway, set in 1947. How far did he ride alone to win that stage?",
+  "choices": ["153 km (95 miles)", "198 km (123 miles)", "253 km (157 miles)", "302 km (188 miles)"],
+  "answer": "C: 253 km (157 miles)",
+  "answer_detail": "On the 1947 Carcassonne-to-Luchon stage he rode alone for 253 km and won by over 16 minutes. Closest since: Thierry Marie's 234 km solo in 1991.",
+  "source": "Tour de France records",
+  "promo_tag": "Free tote bag this weekend",
+  "promo": "Say this answer at the register Friday through Sunday for a free Sports Plus tote bag. While supplies last."
+}
