@@ -1,0 +1,9 @@
+{
+  "sport": "Baseball",
+  "date": "2026-10-11",
+  "question": "On this date in 2007, the Rockies opened the NLCS in Arizona riding the hottest run in franchise history. Before reaching the World Series, how many of their final 22 games did they win?",
+  "choices": ["16 of 22", "18 of 22", "20 of 22", "21 of 22"],
+  "answer": "D: 21 of 22",
+  "answer_detail": "Counting late-season wins, the Game 163 tiebreaker over San Diego, an NLDS sweep of the Phillies and an NLCS sweep of Arizona, Colorado lost just once. Then Boston swept them in the World Series.",
+  "source": "MLB.com"
+}

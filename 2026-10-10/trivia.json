@@ -1,0 +1,9 @@
+{
+  "sport": "Racing",
+  "date": "2026-10-10",
+  "question": "F1's Singapore night race is Sunday. From its 2008 debut, the Safety Car came out in every Singapore Grand Prix until the streak finally ended. How many straight races did it last?",
+  "choices": ["8 races", "11 races", "14 races", "17 races"],
+  "answer": "C: 14 straight races",
+  "answer_detail": "Every Singapore GP from 2008 to 2023 needed the Safety Car (no race was held in 2020-21). Lando Norris won the first Safety Car-free edition in 2024, and George Russell won another in 2025.",
+  "source": "Formula1.com"
+}
