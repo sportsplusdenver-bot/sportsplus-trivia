@@ -1,0 +1,9 @@
+{
+  "sport": "Baseball",
+  "date": "2026-10-19",
+  "question": "45 years ago today, Montreal's best shot ended on \"Blue Monday.\" In 36 seasons in Montreal (1969-2004), how many postseason series did the Expos win?",
+  "choices": ["Zero", "One", "Three", "Five"],
+  "answer": "B: Just one",
+  "answer_detail": "Their lone playoff trip came in strike-split 1981, when they beat the Phillies 3-2. Then on Oct. 19, 1981, Rick Monday homered off ace Steve Rogers, pitching in relief, with two outs in the 9th to send the Dodgers to the World Series.",
+  "source": "Baseball-Reference"
+}
