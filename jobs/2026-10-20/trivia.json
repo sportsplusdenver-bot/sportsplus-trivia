@@ -1,0 +1,9 @@
+{
+  "sport": "Football",
+  "date": "2026-10-20",
+  "question": "63 years ago today, Jim Brown passed Joe Perry to become the NFL's career rushing leader, midway through only his 7th season. In his 9-season career, how many times did Brown lead the NFL in rushing?",
+  "choices": ["5 times", "6 times", "8 times", "All 9 seasons"],
+  "answer": "C: 8 of 9 seasons",
+  "answer_detail": "His only miss was 1962, when Green Bay's Jim Taylor took the rushing title. Brown never missed a game and retired at 30 after the 1965 season with 12,312 yards.",
+  "source": "Pro Football Hall of Fame"
+}
