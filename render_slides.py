@@ -40,6 +40,7 @@ Writes into OUT_DIR:
 """
 import datetime
 import json
+import math
 import os
 import re
 import sys
@@ -459,6 +460,48 @@ def _rich_layer(line, fnt, fill, hi):
     return im
 
 
+def _digit_spans(line, fnt):
+    """x ranges (in _rich_layer coordinates) of the highlighted words, minus trailing punctuation."""
+    spans, x, space = [], 6, fnt.getlength(" ")
+    for word in line.split(" "):
+        if re.search(r"\d", word):
+            core = word.rstrip(".,;:!?)\u201d\u2019")
+            spans.append((x, x + fnt.getlength(core)))
+        x += fnt.getlength(word) + space
+    return spans
+
+
+def _underline(d, lx, ly, fnt, spans, u, color):
+    """Marker underline under the highlighted words of a line pasted at (lx, ly); sweeps in as u goes 0 -> 1."""
+    if u <= 0 or not spans:
+        return
+    asc, _ = fnt.getmetrics()
+    th = max(6, int(fnt.size * 0.09))
+    y = ly + 6 + asc + int(fnt.size * 0.12)
+    for x0, x1 in spans:
+        xe = x0 + (x1 - x0) * min(1.0, u)
+        if xe - x0 > th:
+            d.rounded_rectangle([lx + x0, y, lx + xe, y + th], radius=th // 2, fill=color)
+
+
+def _kick(t, events):
+    """Camera kick amount at t: each event (time, amount, decay) jumps the zoom and eases back."""
+    k = 0.0
+    for te, amp, dec in events:
+        if te <= t < te + 6 * dec:
+            k += amp * math.exp(-(t - te) / dec)
+    return k
+
+
+def _punch(fr, s):
+    """Zoom the whole frame by s around its center (camera kick / slow push-in)."""
+    if s <= 1.0005:
+        return fr
+    w, h = fr.size
+    cw, ch = w / s, h / s
+    return fr.resize((w, h), Image.BICUBIC, box=((w - cw) / 2, (h - ch) / 2, (w + cw) / 2, (h + ch) / 2))
+
+
 def _put(frame, im, x, y, alpha=1.0, scale=1.0):
     """Paste an RGBA layer with fade and scale (around its center); clips at the edges."""
     if alpha <= 0.01 or scale <= 0.01:
@@ -493,10 +536,10 @@ def _emoji_img(ch, size):
     return im.resize((size, int(size * im.height / im.width)), Image.LANCZOS)
 
 
-def _ring(rem, color, num, num_scale):
+def _ring(rem, color, num, num_scale, r=74):
     """Countdown ring (drawn at 2x then downscaled for smooth edges)."""
     S = 2
-    r, wd = 74, 15
+    wd = max(15, int(r * 0.2))
     size = (r + wd + 6) * 2
     im = Image.new("RGBA", (size * S, size * S), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
@@ -507,7 +550,7 @@ def _ring(rem, color, num, num_scale):
         d.arc(box, -90 + 360 * (1 - rem), 270, fill=color + (255,), width=wd * S)
     im = im.resize((size, size), Image.LANCZOS)
     if num is not None:
-        nf = font(BOLD, int(78 * num_scale))
+        nf = font(BOLD, int(78 * r / 74 * num_scale))
         ImageDraw.Draw(im).text((size / 2, size / 2 + 2), str(num), font=nf, fill=INK, anchor="mm")
     return im
 
@@ -564,7 +607,33 @@ def _header_layer(date_str, sport, on_dark):
     return im.crop(bb), bb[0], bb[1], bottom
 
 
-def _synth_audio(path, total, reveal_has_choices=True):
+def _drum_voices(np, rng, sr):
+    """Clap, pop and crash shared by both Short soundtracks."""
+    def tt(d):
+        return np.arange(int(sr * d)) / sr
+
+    def clap():
+        x = tt(0.2)
+        nz = np.diff(rng.standard_normal(len(x) + 1))
+        env = np.exp(-x * 30)
+        for dt in (0.011, 0.022):
+            env = env + 0.7 * np.where(x >= dt, np.exp(-(x - dt) * 34), 0)
+        return nz * env * 0.5
+
+    def pop():
+        x = tt(0.09)
+        f = 320 + 700 * np.exp(-x * 60)
+        return np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-x * 38)
+
+    def crash():
+        x = tt(1.4)
+        nz = np.diff(rng.standard_normal(len(x) + 1))
+        return nz * np.exp(-x * 2.6) * 0.6
+
+    return clap, pop, crash
+
+
+def _synth_audio(path, total, reveal_has_choices=True, pops=(), thuds=()):
     import numpy as np
     import wave
     sr = 44100
@@ -627,6 +696,8 @@ def _synth_audio(path, total, reveal_has_choices=True):
         f = 220 * (4 ** (x / d))
         return np.sin(2 * np.pi * np.cumsum(f) / sr) * (x / d) ** 2 * 0.6
 
+    clap, pop, crash = _drum_voices(np, rng, sr)
+
     roots = [110.0, 87.31, 130.81, 98.0]  # A F C G
     beat = 0.5
     t = 0.0
@@ -639,6 +710,8 @@ def _synth_audio(path, total, reveal_has_choices=True):
             root = roots[int(t // 2) % 4]
             add(bass(root), t, 0.22 if soft else 0.3)
             add(bass(root), t + beat / 2, 0.14 if soft else 0.2)
+            if round(t / beat) % 2 == 1:  # clap on 2 and 4
+                add(clap(), t, 0.16 if soft else 0.26)
         t += beat
     add(boom(), 0.02, 0.9)
     for at in (T_Q - 0.25, T_CH - 0.3, T_ANS - 0.25, T_OUT - 0.25):
@@ -652,11 +725,16 @@ def _synth_audio(path, total, reveal_has_choices=True):
     for i, f in enumerate((1046.5, 1318.5, 1568.0, 2093.0)):
         add(bell(f), T_REV + 0.02 + i * 0.07, 0.22)
     add(bell(1568.0, 1.0), T_ANS + 0.05, 0.12)
+    add(crash(), T_REV, 0.3)
+    for at in pops:
+        add(pop(), at, 0.32)
+    for at in thuds:
+        add(kick(), at, 0.6)
     fade = np.ones(n)
     k = int(sr * 0.6)
     fade[-k:] = np.linspace(1, 0, k)
-    mix = np.tanh(mix * 1.1) * fade
-    mix = mix / (np.max(np.abs(mix)) + 1e-9) * 0.89
+    mix = np.tanh(mix * 1.5) * fade
+    mix = mix / (np.max(np.abs(mix)) + 1e-9) * 0.62
     pcm = (mix * 32767).astype(np.int16)
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
@@ -702,6 +780,7 @@ def make_video(data, date_str, out, platform="youtube"):
     qf, qlines, qlh, qtotal = fit(data["question"], BOLD, TEXT_W, q_box_h, 104, 56)
     qy = q_top + max(0, (q_box_h - qtotal) // 2 - 30)
     q_layers = [_rich_layer(l, qf, CREAM, PINK) for l in qlines]
+    q_spans = [_digit_spans(l, qf) for l in qlines]
     tag_layer = None
     if tag:
         tf = font(BOLD, 32)
@@ -891,6 +970,8 @@ def make_video(data, date_str, out, platform="youtube"):
             for i, ly in enumerate(q_layers):
                 p = _prog(lt, 0.25 + i * 0.2, 0.32)
                 _put(fr, ly, SAFE_L - 6, qy + i * qlh - 6 + 60 * (1 - _ease(p)), alpha=p)
+                _underline(d, SAFE_L - 6, qy + i * qlh - 6, qf, q_spans[i],
+                           _ease(_prog(lt, 0.65 + i * 0.2, 0.3)), PINK)
             if tag_layer is not None:
                 s = _back(_prog(lt, 1.6, 0.4))
                 _put(fr, tag_layer, SAFE_L, cta_y - 100, alpha=min(1, s * 1.5), scale=s)
@@ -924,8 +1005,9 @@ def make_video(data, date_str, out, platform="youtube"):
                 _put(fr, sub_rev, SAFE_L - 6, title_y + 118 - 6, alpha=rp)
             for i, im in enumerate(boxes):
                 bx, by = box_pos[i]
-                p = _ease(_prog(lt, 0.5 + i * 0.13, 0.35))
-                x = bx + (1 - p) * 700
+                p = _prog(lt, 0.5 + i * 0.13, 0.35)
+                x = bx + (1 - _back(p, 1.5)) * 700
+                p = min(1.0, p * 2.5)
                 if revealing and correct is not None:
                     if i == correct:
                         pop = 1 + 0.08 * math.sin(math.pi * _prog(t, T_REV, 0.45))
@@ -1042,9 +1124,15 @@ def make_video(data, date_str, out, platform="youtube"):
             wipe(d, _lerp(0.0, 0.5, _prog(t, T_OUT - 0.3, 0.3)), INK, PINK)
         return fr
 
+    # camera kicks on the big beats (kept small: a nudge, not a shake)
+    kicks = [(0.63, 0.03, 0.15), (T_Q, 0.02, 0.15), (T_REV, 0.05, 0.2), (T_ANS + 0.45, 0.03, 0.15),
+             (T_OUT + 1.5, 0.02, 0.12)]
+    kicks += [(T_CH + 0.5 + i * 0.13 + 0.3, 0.01, 0.1) for i in range(len(choices))]
+    kicks += [(T_CD + k, 0.012, 0.12) for k in range(5)]
     tmpdir = tempfile.mkdtemp(prefix="short_")
     wav = os.path.join(tmpdir, "audio.wav")
-    _synth_audio(wav, T_END)
+    _synth_audio(wav, T_END, pops=[T_CH + 0.5 + i * 0.13 + 0.3 for i in range(len(choices))],
+                 thuds=[T_ANS + 0.45])
     name = "short_tiktok.mp4" if platform == "tiktok" else "short.mp4"
     mp4 = os.path.join(out, name)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
@@ -1054,7 +1142,8 @@ def make_video(data, date_str, out, platform="youtube"):
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     try:
         for i in range(int(T_END * FPS)):
-            proc.stdin.write(frame_at(i / FPS).convert("RGB").tobytes())
+            t = i / FPS
+            proc.stdin.write(_punch(frame_at(t), 1 + _kick(t, kicks)).convert("RGB").tobytes())
     finally:
         proc.stdin.close()
         proc.wait()
@@ -1074,7 +1163,7 @@ def make_video(data, date_str, out, platform="youtube"):
 # else the full question and the first sentence of answer_detail.
 # ----------------------------------------------------------------------------
 
-def _synth_audio_fast(path, total, t_cd, t_rev, t_ans):
+def _synth_audio_fast(path, total, t_cd, t_rev, t_ans, pops=(), thuds=()):
     import numpy as np
     import wave
     sr = 44100
@@ -1135,19 +1224,29 @@ def _synth_audio_fast(path, total, t_cd, t_rev, t_ans):
         f = 220 * (4 ** (x / d))
         return np.sin(2 * np.pi * np.cumsum(f) / sr) * (x / d) ** 2 * 0.6
 
-    beat = 60 / 128
+    clap, pop, crash = _drum_voices(np, rng, sr)
+    beat = 0.5  # 120 BPM: every cue in the video lands on this grid
     roots = [110.0, 87.31, 130.81, 98.0]
     t, k = 0.0, 0
     while t < total - 0.2:
         if not (t_rev - 0.05 <= t < t_ans):
             soft = t >= t_ans
-            add(kick(), t, 0.5 if soft else 0.8)
-            add(hat(), t + beat / 2, 0.09 if soft else 0.13)
+            add(kick(), t, 0.55 if soft else 0.85)
+            add(hat(), t + beat / 2, 0.09 if soft else 0.14)
+            if k % 2 == 1:
+                add(clap(), t, 0.16 if soft else 0.28)
             root = roots[(k // 4) % 4]
             add(bass(root), t, 0.2 if soft else 0.28)
             add(bass(root * 2 if k % 2 else root), t + beat / 2, 0.12 if soft else 0.17)
         t += beat
         k += 1
+    for i in range(8):  # quick clap roll in the last half second before the reveal
+        add(clap(), t_rev - 0.5 + i * 0.0625, 0.06 + 0.03 * i)
+    add(crash(), t_rev, 0.32)
+    for at in pops:
+        add(pop(), at, 0.34)
+    for at in thuds:
+        add(kick(), at, 0.65)
     add(boom(), 0.0, 0.8)
     add(noise_sweep(0.35, up=False), 0.0, 0.45)
     for i in range(3):
@@ -1161,8 +1260,8 @@ def _synth_audio_fast(path, total, t_cd, t_rev, t_ans):
     fade = np.ones(n)
     kf = int(sr * 0.35)
     fade[-kf:] = np.linspace(1, 0, kf)
-    mix = np.tanh(mix * 1.1) * fade
-    mix = mix / (np.max(np.abs(mix)) + 1e-9) * 0.89
+    mix = np.tanh(mix * 1.5) * fade
+    mix = mix / (np.max(np.abs(mix)) + 1e-9) * 0.62
     with wave.open(path, "wb") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
@@ -1195,14 +1294,14 @@ def make_video_fast(data, date_str, out, platform="youtube"):
     words = len(qtext.split()) + sum(len(str(c).split()) for c in choices)
     T_REV_ = min(9.5, max(6.0, _half(1.8 + words / 3.6)))
     T_CD_ = T_REV_ - 3.0
-    T_ANS_ = T_REV_ + 1.2
+    T_ANS_ = T_REV_ + 1.0
     a_words = len(headline.split()) + len(detail.split())
     T_END_ = T_ANS_ + min(5.5, max(3.8, _half(1.6 + a_words / 3.6)))
 
     # ---------- question + choices screen (black) ----------
     # header without the date, so the countdown ring never sits on top of it
     hdr_d, hdx, hdy, top = _header_layer("", sport, True)
-    ring_cx, ring_cy = SAFE_R - 92, SAFE_T + 60
+    ring_cx, ring_cy = SAFE_R - 106, SAFE_T + 62
     bar_y = SAFE_B - 34
     region_top, region_bot = top + 50, bar_y - 46
     badge, gap = 92, 22
@@ -1239,6 +1338,7 @@ def make_video_fast(data, date_str, out, platform="youtube"):
         ask_layer = None
         ch_top = qy + qtotal + ask_gap
     q_layers = [_rich_layer(l, qf, CREAM, PINK) for l in qlines]
+    q_spans = [_digit_spans(l, qf) for l in qlines]
     boxes, boxes_ok = [], []
     if choices:
         bf = font(BOLD, 50)
@@ -1345,23 +1445,32 @@ def make_video_fast(data, date_str, out, platform="youtube"):
             fr.paste(hdr_d, (hdx, hdy), hdr_d)
             revealing = t >= T_REV_
             rp = _prog(t, T_REV_, 0.35)
-            # the question is fully readable on frame 0; it only settles from a slight zoom
-            qs = _lerp(1.05, 1.0, _ease(_prog(t, 0.0, 0.35)))
+            # the question is fully readable on frame 0 (the camera kick does the opening punch)
             for i, ly in enumerate(q_layers):
-                _put(fr, ly, SAFE_L - 6, qy + i * qlh - 6, scale=qs,
-                     alpha=1.0 - (0.25 * rp if revealing else 0))
+                _put(fr, ly, SAFE_L - 6, qy + i * qlh - 6, alpha=1.0 - (0.25 * rp if revealing else 0))
+                if not revealing:
+                    _underline(d, SAFE_L - 6, qy + i * qlh - 6, qf, q_spans[i],
+                               _ease(_prog(t, 0.35 + i * 0.12, 0.3)), PINK)
             if choices:
                 if not revealing:
                     if ask_layer is not None:
-                        _put(fr, ask_layer, SAFE_L - 6, ask_y - 6, alpha=_prog(t, 0.9, 0.3))
+                        # the "Comment A, B or C" line bumps on each clap until the countdown starts
+                        bump = 0.0
+                        if 1.5 <= t < T_CD_:
+                            bump = 0.06 * math.exp(-((t - 0.5) % 1.0) / 0.12)
+                        sc = 1 + bump
+                        _put(fr, ask_layer, SAFE_L - 6 + ask_layer.width * (sc - 1) / 2, ask_y - 6,
+                             alpha=_prog(t, 0.9, 0.3), scale=sc)
                 else:
                     s = _back(rp, 2.6)
                     _put(fr, title_rev, SAFE_L - 6, ch_top - ask_gap - title_rev.height + 18,
                          alpha=min(1, s * 1.4), scale=_lerp(0.6, 1, s))
             for i, im in enumerate(boxes):
                 bx, by = box_pos[i]
-                p = _ease(_prog(t, 0.25 + i * 0.15, 0.3))
-                x = bx + (1 - p) * 700
+                # each choice lands on an eighth note (0.5, 0.75, 1.0 s) with a little overshoot
+                p = _prog(t, 0.3 + i * 0.25, 0.2)
+                x = bx + (1 - _back(p, 1.5)) * 700
+                p = min(1.0, p * 2.5)
                 if revealing and correct is not None:
                     if i == correct:
                         pop = 1 + 0.08 * math.sin(math.pi * _prog(t, T_REV_, 0.45))
@@ -1389,13 +1498,13 @@ def make_video_fast(data, date_str, out, platform="youtube"):
                     num = max(1, math.ceil(rem * 3 - 1e-6))
                     since = (t - T_CD_) % 1.0 if t >= T_CD_ else 1.0
                     ring = _ring(rem, _mix(PINK, INK, 1 - rem) if rem < 0.5 else PINK, num,
-                                 1 + 0.45 * (1 - _ease(since / 0.3)))
+                                 1 + 0.5 * (1 - _ease(since / 0.25)), r=96)
                     ap = _back(_prog(t, T_CD_ - 0.3, 0.3))
                     _put(fr, ring, ring_cx - ring.width / 2, ring_cy - ring.height / 2, alpha=min(1, ap), scale=ap)
                 else:
-                    cb = _check_badge(150)
+                    cb = _check_badge(190)
                     s = _back(rp, 2.2)
-                    _put(fr, cb, ring_cx - 75, ring_cy - 75, alpha=min(1, s * 1.5), scale=s)
+                    _put(fr, cb, ring_cx - 95, ring_cy - 95, alpha=min(1, s * 1.5), scale=s)
             if revealing:
                 if confetti_ch is not None:
                     _draw_confetti(d, confetti_ch, t - T_REV_)
@@ -1435,9 +1544,19 @@ def make_video_fast(data, date_str, out, platform="youtube"):
             wipe(d, _lerp(0.0, 0.5, _prog(t, T_END_ - 0.3, 0.3)), INK, PINK)
         return fr
 
+    pops = [0.5 + 0.25 * i for i in range(len(choices))]
+    kicks = [(0.0, 0.035, 0.18), (T_REV_, 0.05, 0.2), (T_ANS_ + 0.38, 0.03, 0.15), (T_ANS_ + 1.7, 0.01, 0.1)]
+    kicks += [(at, 0.012, 0.1) for at in pops]
+    kicks += [(T_CD_ + k, 0.015, 0.12) for k in range(3)]
+
+    def camera(t):
+        # slow push-in on each screen (the jump between screens is hidden by the wipe) plus the kicks
+        base = 0.02 * _prog(t, 0.0, T_ANS_) if t < T_ANS_ else 0.012 * _prog(t, T_ANS_, T_END_ - T_ANS_)
+        return 1 + base + _kick(t, kicks)
+
     tmpdir = tempfile.mkdtemp(prefix="shortfast_")
     wav = os.path.join(tmpdir, "audio.wav")
-    _synth_audio_fast(wav, T_END_, T_CD_, T_REV_, T_ANS_)
+    _synth_audio_fast(wav, T_END_, T_CD_, T_REV_, T_ANS_, pops=pops, thuds=[T_ANS_ + 0.38])
     name = "short_fast_tiktok.mp4" if platform == "tiktok" else "short_fast.mp4"
     mp4 = os.path.join(out, name)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
@@ -1447,7 +1566,8 @@ def make_video_fast(data, date_str, out, platform="youtube"):
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     try:
         for i in range(int(round(T_END_ * FPS))):
-            proc.stdin.write(frame_at(i / FPS).convert("RGB").tobytes())
+            t = i / FPS
+            proc.stdin.write(_punch(frame_at(t), camera(t)).convert("RGB").tobytes())
     finally:
         proc.stdin.close()
         proc.wait()
