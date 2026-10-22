@@ -4,8 +4,8 @@
 Usage:
     python3 render_slides.py trivia.json OUT_DIR [--format both|tiktok|instagram] [--video]
 
---video also writes short.mp4: an animated 1080x1920 YouTube Short, usually 35-45 seconds,
-and short_tiktok.mp4: the same video ending on a "Follow" card instead of "Subscribe"
+--video also writes short.mp4: an animated 1080x1920, 60 fps YouTube Short, usually 35-45 seconds,
+and (with --tiktok-video) short_tiktok.mp4: the same video ending on a "Follow" card
 (hook, question, choices with a 5-second countdown, reveal with confetti, answer, subscribe card).
 Screen times scale with the amount of text, at about 3 words per second.
 It also writes short_fast.mp4: a ~15-second Short with no intro (question and choices on screen
@@ -373,7 +373,7 @@ def slide_answer(data, date_str):
 # Audio is synthesized here (beat, whooshes, ticks, riser, chime): no music rights needed.
 # ----------------------------------------------------------------------------
 
-FPS = 30
+FPS = 60  # smoother motion on phones (motion playbook: 60 fps, CRF ~16-17)
 T_Q, T_CH, T_CD, T_REV, T_ANS, T_OUT, T_END = 2.5, 9.0, 11.0, 16.0, 17.5, 26.5, 30.0
 OUTRO = 3.5
 WORDS_PER_SEC = 3.0
@@ -416,6 +416,106 @@ SPORT_EMOJI = [
 def _ease(t):
     t = min(1.0, max(0.0, t))
     return 1 - (1 - t) ** 3
+
+
+# Motion rules (from the "launch-motion" playbook, Oct 21, 2026): nothing moves linearly;
+# entrances ~0.5 s with a slight overshoot; exits faster (~60 %) and ease-in; a click is a
+# tiny press (100 -> 96 -> 100 %); pans/zooms use an easy ease; nothing ever fully stops
+# (the camera always has a micro-push); count-ups take ~1 s, ease-out, never jump.
+
+def _ease_io(t):
+    """Easy ease (cubic in-out) for camera moves."""
+    t = min(1.0, max(0.0, t))
+    return 4 * t ** 3 if t < 0.5 else 1 - (-2 * t + 2) ** 3 / 2
+
+
+def _ease_in2(t):
+    """Ease-in for exits and for wipes closing over a scene."""
+    t = min(1.0, max(0.0, t))
+    return t * t
+
+
+def _bezier_ease(x, x1, y1, x2, y2):
+    """CSS-style cubic-bezier(x1, y1, x2, y2) evaluated at x (0-1)."""
+    x = min(1.0, max(0.0, x))
+    lo, hi = 0.0, 1.0
+    for _ in range(24):
+        u = (lo + hi) / 2
+        bx = 3 * (1 - u) ** 2 * u * x1 + 3 * (1 - u) * u ** 2 * x2 + u ** 3
+        lo, hi = (u, hi) if bx < x else (lo, u)
+    u = (lo + hi) / 2
+    return 3 * (1 - u) ** 2 * u * y1 + 3 * (1 - u) * u ** 2 * y2 + u ** 3
+
+
+def _enter(t):
+    """Entrance with a slight overshoot: cubic-bezier(0.34, 1.56, 0.64, 1)."""
+    return _bezier_ease(t, 0.34, 1.56, 0.64, 1.0)
+
+
+def _settle(t):
+    """Eases in and out, then settles with a tiny overshoot, like a real hand."""
+    return _bezier_ease(t, 0.5, 0.0, 0.2, 1.12)
+
+
+def _press_pop(dt):
+    """Click feel for the right answer: a quick press to 96 %, then a springy pop past 100 % and back."""
+    if dt <= 0:
+        return 1.0
+    if dt < 0.07:
+        return 1 - 0.04 * _ease_io(dt / 0.07)
+    u = min(1.0, (dt - 0.07) / 0.4)
+    return _lerp(0.96, 1.0, _ease(u)) + 0.1 * math.sin(math.pi * u) * (1 - u)
+
+
+_NUM_RE = re.compile(r"\d[\d,]*(?:\.\d+)?")
+
+
+def _count_target(text):
+    """The first number in an answer headline worth counting up to: (as written, value), or None.
+    Years (1800-2099 without a comma) and scores or ranges like 91-63 are left alone."""
+    m = _NUM_RE.search(text)
+    if not m:
+        return None
+    num = m.group(0).rstrip(",.")
+    raw = num.replace(",", "")
+    try:
+        val = float(raw)
+    except ValueError:
+        return None
+    if re.fullmatch(r"(18|19|20)\d\d", raw) or val <= 0:
+        return None
+    a, b = m.start(), m.start() + len(num)
+    if (a > 0 and text[a - 1] in "\u2013-:/") or (b < len(text) and text[b] in "\u2013-:/"):
+        return None
+    return num, val
+
+
+def _count_str(val, like, u):
+    """`like` (e.g. "1,767" or "8.5") counted to fraction u of its value, formatted the same way."""
+    if u >= 1:
+        return like
+    dec = len(like.split(".")[1]) if "." in like else 0
+    v = val * u
+    v = round(v, dec) if dec else math.floor(v)
+    return f"{v:,.{dec}f}" if "," in like else f"{v:.{dec}f}"
+
+
+def _count_layer(line, fnt, fill, num, cur):
+    """`line` with `num` shown as `cur`, everything else exactly where the final line puts it
+    (the number is right-aligned in its final slot after a word, left-aligned at a line start)."""
+    i = line.find(num)
+    pre, post = line[:i], line[i + len(num):]
+    asc, desc = fnt.getmetrics()
+    im = Image.new("RGBA", (int(fnt.getlength(line)) + 12, asc + desc + 12), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    x0 = 6 + fnt.getlength(pre)
+    wf = fnt.getlength(num)
+    if pre:
+        d.text((6, 6), pre, font=fnt, fill=fill)
+    d.text((x0 + (wf - fnt.getlength(cur) if pre.strip() else 0), 6), cur, font=fnt, fill=fill)
+    if post:
+        d.text((x0 + wf, 6), post, font=fnt, fill=fill)
+    return im
 
 
 def _back(t, s=1.9):
@@ -881,6 +981,8 @@ def make_video(data, date_str, out, platform="youtube"):
     avail = content_bottom - 50 - ay
     af, alines, alh, _ = fit(data["answer"], BOLD, TEXT_W, int(avail * 0.42), 150, 70, spacing=1.05)
     a_layers = [_layer(l, af, INK) for l in alines]
+    a_count = _count_target(data["answer"])
+    a_count_line = next((i for i, l in enumerate(alines) if a_count and a_count[0] in l), None)
     rule_y = ay + alh * len(alines) + af.getmetrics()[1] + 24
     det_y = rule_y + 50
     df, dlines, dlh, _ = fit(data.get("answer_detail", ""), MEDIUM, TEXT_W,
@@ -969,7 +1071,7 @@ def make_video(data, date_str, out, platform="youtube"):
             _put(fr, hdr_d, hdx, hdy - 50 * (1 - hp), alpha=hp)
             for i, ly in enumerate(q_layers):
                 p = _prog(lt, 0.25 + i * 0.2, 0.32)
-                _put(fr, ly, SAFE_L - 6, qy + i * qlh - 6 + 60 * (1 - _ease(p)), alpha=p)
+                _put(fr, ly, SAFE_L - 6, qy + i * qlh - 6 + 60 * (1 - _enter(p)), alpha=min(1.0, p * 1.5))
                 _underline(d, SAFE_L - 6, qy + i * qlh - 6, qf, q_spans[i],
                            _ease(_prog(lt, 0.65 + i * 0.2, 0.3)), PINK)
             if tag_layer is not None:
@@ -981,7 +1083,7 @@ def make_video(data, date_str, out, platform="youtube"):
             if fill_w > 16:
                 d.rounded_rectangle([SAFE_L, bar_y, SAFE_L + fill_w, bar_y + 16], radius=8, fill=PINK)
             if t > T_CH - 0.3:
-                wipe(d, _lerp(0.0, 0.5, _prog(t, T_CH - 0.3, 0.3)))
+                wipe(d, _lerp(0.0, 0.5, _ease_in2(_prog(t, T_CH - 0.3, 0.3))))
             if lt < 0.15:
                 fr = Image.blend(fr, Image.new("RGB", (W, H), CREAM), 0.5 * (1 - lt / 0.15))
             return fr
@@ -1010,7 +1112,7 @@ def make_video(data, date_str, out, platform="youtube"):
                 p = min(1.0, p * 2.5)
                 if revealing and correct is not None:
                     if i == correct:
-                        pop = 1 + 0.08 * math.sin(math.pi * _prog(t, T_REV, 0.45))
+                        pop = _press_pop(t - T_REV)
                         _put(fr, boxes_ok[i], x, by, alpha=rp, scale=pop)
                         if rp < 1:
                             _put(fr, im, x, by, alpha=1 - rp)
@@ -1055,7 +1157,7 @@ def make_video(data, date_str, out, platform="youtube"):
             if lt < 0.3:
                 wipe(ImageDraw.Draw(fr), _lerp(0.5, 1.0, _ease(_prog(lt, 0.0, 0.3))))
             if t > T_ANS - 0.3:
-                wipe(ImageDraw.Draw(fr), _lerp(0.0, 0.5, _prog(t, T_ANS - 0.3, 0.3)), PINK, INK)
+                wipe(ImageDraw.Draw(fr), _lerp(0.0, 0.5, _ease_in2(_prog(t, T_ANS - 0.3, 0.3))), PINK, INK)
             return fr
         if t >= T_OUT:  # --------------------------------------------- subscribe outro
             lt = t - T_OUT
@@ -1070,23 +1172,28 @@ def make_video(data, date_str, out, platform="youtube"):
             s = _back(_prog(lt, 0.3, 0.4), 2.2) * (1 + 0.1 * math.sin(math.pi * _prog(lt, 1.5, 0.35)))
             if on < 1:
                 _put(fr, btn_off, (W - btn_off.width) / 2, btn_cy - btn_off.height / 2,
-                     alpha=min(1, s * 1.5) * (1 - on), scale=s * (1 - 0.06 * math.sin(math.pi * tap)))
+                     alpha=min(1, s * 1.5) * (1 - on), scale=s * (1 - 0.04 * math.sin(math.pi * tap)))
             if on > 0:
                 _put(fr, btn_on, (W - btn_on.width) / 2, btn_cy - btn_on.height / 2, alpha=on, scale=s)
             p = _prog(lt, 0.6, 0.3)
             _put(fr, out_line, (W - out_line.width) / 2, 1090 + 30 * (1 - _ease(p)), alpha=p)
             _put(fr, out_wm, (W - out_wm.width) / 2, 1200, alpha=_prog(lt, 0.8, 0.3))
             if hand is not None:
-                arrive = _ease(_prog(lt, 0.85, 0.5))
-                leave = _ease(_prog(lt, 2.4, 0.4))
-                hx = W / 2 + 120 - hand.width / 2
-                hy = _lerp(H + 40, btn_cy + 10, arrive) + (H - btn_cy) * leave + 18 * math.sin(math.pi * tap)
+                # arc in from the lower right (quadratic bezier, control point ~15 % off the
+                # straight line), settle with a tiny overshoot, tap, then leave faster, ease-in
+                u = _settle(_prog(lt, 0.8, 0.6))
+                sx, sy = W / 2 + 420, H + 60
+                ex, ey = W / 2 + 120 - hand.width / 2, btn_cy + 10
+                cx_, cy_ = (sx + ex) / 2 + 0.15 * (ey - sy), (sy + ey) / 2 - 0.15 * (ex - sx)
+                hx = (1 - u) ** 2 * sx + 2 * (1 - u) * u * cx_ + u ** 2 * ex
+                hy = (1 - u) ** 2 * sy + 2 * (1 - u) * u * cy_ + u ** 2 * ey
+                hy += (H - btn_cy) * _ease_in2(_prog(lt, 2.4, 0.3)) + 18 * math.sin(math.pi * tap)
                 _put(fr, hand, hx, hy, scale=1 - 0.08 * math.sin(math.pi * tap))
             _draw_confetti(d, confetti_sub, lt - 1.55, life=1.8)
             if lt < 0.35:
                 wipe(ImageDraw.Draw(fr), _lerp(0.5, 1.0, _ease(_prog(lt, 0.0, 0.35))), INK, PINK)
             if t > T_END - 0.3:  # brief wipe at the end so the loop restarts cleanly
-                wipe(ImageDraw.Draw(fr), _lerp(0.0, 0.5, _prog(t, T_END - 0.3, 0.3)))
+                wipe(ImageDraw.Draw(fr), _lerp(0.0, 0.5, _ease_in2(_prog(t, T_END - 0.3, 0.3))))
             return fr
         # ------------------------------------------------------------------- answer
         lt = t - T_ANS
@@ -1098,13 +1205,16 @@ def make_video(data, date_str, out, platform="youtube"):
         _put(fr, ans_pill, SAFE_L, SAFE_T + LOGO_H + LOGO_GAP - 40 * (1 - hp), alpha=hp)
         for i, ly in enumerate(a_layers):
             p = _prog(lt, 0.15 + i * 0.1, 0.3)
-            _put(fr, ly, SAFE_L - 6, ay + i * alh - 6, alpha=min(1, p * 1.6), scale=_lerp(1.45, 1.0, _ease(p)))
+            if i == a_count_line:  # the answer's number counts up over ~1 s, ease-out
+                cur = _count_str(a_count[1], a_count[0], _ease(_prog(lt, 0.15, 1.0)))
+                ly = _count_layer(alines[i], af, INK, a_count[0], cur)
+            _put(fr, ly, SAFE_L - 6, ay + i * alh - 6, alpha=min(1, p * 1.6), scale=_lerp(1.45, 1.0, _enter(p)))
         rw = int(170 * _ease(_prog(lt, 0.45, 0.3)))
         if rw > 2:
             d.rectangle([SAFE_L, rule_y, SAFE_L + rw, rule_y + 10], fill=INK)
         for i, ly in enumerate(d_layers):
             p = _prog(lt, 0.7 + i * 0.12, 0.35)
-            _put(fr, ly, SAFE_L - 6 + 40 * (1 - _ease(p)), det_y + i * dlh - 6, alpha=p)
+            _put(fr, ly, SAFE_L - 6 + 40 * (1 - _enter(p)), det_y + i * dlh - 6, alpha=min(1.0, p * 1.5))
         if promo_layer is not None:
             p = _ease(_prog(lt, 1.6, 0.4))
             _put(fr, promo_layer, SAFE_L, promo_y + 80 * (1 - p), alpha=p)
@@ -1121,7 +1231,7 @@ def make_video(data, date_str, out, platform="youtube"):
         if lt < 0.3:
             wipe(d, _lerp(0.5, 1.0, _ease(_prog(lt, 0.0, 0.3))), PINK, INK)
         if t > T_OUT - 0.3:  # wipe into the subscribe card
-            wipe(d, _lerp(0.0, 0.5, _prog(t, T_OUT - 0.3, 0.3)), INK, PINK)
+            wipe(d, _lerp(0.0, 0.5, _ease_in2(_prog(t, T_OUT - 0.3, 0.3))), INK, PINK)
         return fr
 
     # camera kicks on the big beats (kept small: a nudge, not a shake)
@@ -1129,6 +1239,14 @@ def make_video(data, date_str, out, platform="youtube"):
              (T_OUT + 1.5, 0.02, 0.12)]
     kicks += [(T_CH + 0.5 + i * 0.13 + 0.3, 0.01, 0.1) for i in range(len(choices))]
     kicks += [(T_CD + k, 0.012, 0.12) for k in range(5)]
+    segs = [(0.0, T_Q, 0.02), (T_Q, T_CH, 0.02), (T_CH, T_ANS, 0.015), (T_ANS, T_OUT, 0.015), (T_OUT, T_END, 0.02)]
+
+    def push(t):  # nothing ever fully stops: a slow push on each scene, reset under the transitions
+        for a, b, amt in segs:
+            if a <= t < b:
+                return amt * _ease_io(_prog(t, a, b - a))
+        return 0.0
+
     tmpdir = tempfile.mkdtemp(prefix="short_")
     wav = os.path.join(tmpdir, "audio.wav")
     _synth_audio(wav, T_END, pops=[T_CH + 0.5 + i * 0.13 + 0.3 for i in range(len(choices))],
@@ -1137,13 +1255,13 @@ def make_video(data, date_str, out, platform="youtube"):
     mp4 = os.path.join(out, name)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-           "-i", wav, "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
+           "-i", wav, "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-pix_fmt", "yuv420p",
            "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", mp4]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     try:
         for i in range(int(T_END * FPS)):
             t = i / FPS
-            proc.stdin.write(_punch(frame_at(t), 1 + _kick(t, kicks)).convert("RGB").tobytes())
+            proc.stdin.write(_punch(frame_at(t), 1 + push(t) + _kick(t, kicks)).convert("RGB").tobytes())
     finally:
         proc.stdin.close()
         proc.wait()
@@ -1155,6 +1273,24 @@ def make_video(data, date_str, out, platform="youtube"):
 
 # ----------------------------------------------------------------------------
 # 15-second Short (short_fast.mp4), added Oct 21, 2026 for a one-week test against short.mp4.
+#
+# Storyboard (60 fps; times follow the text, shown here for a 14-word question + 3 short choices,
+# T_REV = 7.5 s). Every cue sits on the 120 BPM grid of the soundtrack.
+#   Scene 1 · Hook + choices    0.0-4.5 s (frames 0-270)
+#     On screen: the question, readable on frame 0; key numbers in pink with a marker
+#     underline sweeping in at 0.35 s; choices A-C land at 0.5 / 0.75 / 1.0 s; "Comment A, B
+#     or C" slides up at 0.9 s and bumps on every clap; time bar drains toward the reveal.
+#     Camera: kick on frame 0, small kicks as each choice lands, slow easy-ease push.
+#   Scene 2 · Countdown         4.5-7.5 s (frames 270-450)
+#     On screen: big 3-2-1 ring top right, a kick on each tick; clap roll into the reveal.
+#     The comment line exits (ease-in, 0.15 s) just before the reveal.
+#   Scene 3 · Reveal            7.5-8.5 s (frames 450-510)
+#     On screen: "It's B!", the right box presses to 96 % and pops to mint with a check, the
+#     others dim, confetti, crash + bells. Camera: the biggest kick. Wipe closes (ease-in).
+#   Scene 4 · Answer + CTA      8.5-~14 s (frames 510-~840)
+#     On screen: the headline slams in (slight settle) and its number counts up over ~1 s;
+#     backstory slides in with overshoot; source; "Subscribe for a new one daily" pops at
+#     +1.3 s. Wipe out at the end so the loop lands on the question again.
 # YouTube showed viewers leaving after 1-4 seconds of the ~45-second Short, so this one has
 # no branded intro: the question is readable on the very first frame, the choices land
 # within a second, a 3-2-1 countdown runs into the reveal at ~7-9 s, then the answer and
@@ -1404,6 +1540,8 @@ def make_video_fast(data, date_str, out, platform="youtube"):
     avail = content_bottom - 40 - ay
     af, alines, alh, _ = fit(headline, BOLD, TEXT_W, int(avail * 0.5), 160, 72, spacing=1.05)
     a_layers = [_layer(l, af, INK) for l in alines]
+    a_count = _count_target(headline)
+    a_count_line = next((i for i, l in enumerate(alines) if a_count and a_count[0] in l), None)
     rule_y = ay + alh * len(alines) + af.getmetrics()[1] + 20
     det_y = rule_y + 46
     df, dlines, dlh, _ = fit(detail, MEDIUM, TEXT_W, content_bottom - 30 - det_y, 54, 34, spacing=1.3)
@@ -1459,8 +1597,11 @@ def make_video_fast(data, date_str, out, platform="youtube"):
                         if 1.5 <= t < T_CD_:
                             bump = 0.06 * math.exp(-((t - 0.5) % 1.0) / 0.12)
                         sc = 1 + bump
-                        _put(fr, ask_layer, SAFE_L - 6 + ask_layer.width * (sc - 1) / 2, ask_y - 6,
-                             alpha=_prog(t, 0.9, 0.3), scale=sc)
+                        pin = _prog(t, 0.9, 0.3)                     # entrance: slide up with overshoot
+                        pout = _ease_in2(_prog(t, T_REV_ - 0.15, 0.15))  # exit: faster, ease-in
+                        _put(fr, ask_layer, SAFE_L - 6 + ask_layer.width * (sc - 1) / 2,
+                             ask_y - 6 + 24 * (1 - _enter(pin)) - 16 * pout,
+                             alpha=min(1.0, pin * 2) * (1 - pout), scale=sc)
                 else:
                     s = _back(rp, 2.6)
                     _put(fr, title_rev, SAFE_L - 6, ch_top - ask_gap - title_rev.height + 18,
@@ -1473,7 +1614,7 @@ def make_video_fast(data, date_str, out, platform="youtube"):
                 p = min(1.0, p * 2.5)
                 if revealing and correct is not None:
                     if i == correct:
-                        pop = 1 + 0.08 * math.sin(math.pi * _prog(t, T_REV_, 0.45))
+                        pop = _press_pop(t - T_REV_)
                         _put(fr, boxes_ok[i], x, by, alpha=rp, scale=pop)
                         if rp < 1:
                             _put(fr, im, x, by, alpha=1 - rp)
@@ -1511,7 +1652,7 @@ def make_video_fast(data, date_str, out, platform="youtube"):
                 if rp < 1:
                     fr = Image.blend(fr, Image.new("RGB", (W, H), (255, 255, 255)), 0.4 * (1 - rp))
             if t > T_ANS_ - 0.3:
-                wipe(ImageDraw.Draw(fr), _lerp(0.0, 0.5, _prog(t, T_ANS_ - 0.3, 0.3)), PINK, INK)
+                wipe(ImageDraw.Draw(fr), _lerp(0.0, 0.5, _ease_in2(_prog(t, T_ANS_ - 0.3, 0.3))), PINK, INK)
             return fr
         # ------------------------------------------------------------- answer
         lt = t - T_ANS_
@@ -1523,13 +1664,16 @@ def make_video_fast(data, date_str, out, platform="youtube"):
         _put(fr, ans_pill, SAFE_L, SAFE_T + LOGO_H + LOGO_GAP - 40 * (1 - hp), alpha=hp)
         for i, ly in enumerate(a_layers):
             p = _prog(lt, 0.1 + i * 0.08, 0.28)
-            _put(fr, ly, SAFE_L - 6, ay + i * alh - 6, alpha=min(1, p * 1.6), scale=_lerp(1.45, 1.0, _ease(p)))
+            if i == a_count_line:  # the answer's number counts up over ~1 s, ease-out
+                cur = _count_str(a_count[1], a_count[0], _ease(_prog(lt, 0.1, 1.0)))
+                ly = _count_layer(alines[i], af, INK, a_count[0], cur)
+            _put(fr, ly, SAFE_L - 6, ay + i * alh - 6, alpha=min(1, p * 1.6), scale=_lerp(1.45, 1.0, _enter(p)))
         rw = int(170 * _ease(_prog(lt, 0.35, 0.3)))
         if rw > 2:
             d.rectangle([SAFE_L, rule_y, SAFE_L + rw, rule_y + 10], fill=INK)
         for i, ly in enumerate(d_layers):
             p = _prog(lt, 0.5 + i * 0.1, 0.3)
-            _put(fr, ly, SAFE_L - 6 + 40 * (1 - _ease(p)), det_y + i * dlh - 6, alpha=p)
+            _put(fr, ly, SAFE_L - 6 + 40 * (1 - _enter(p)), det_y + i * dlh - 6, alpha=min(1.0, p * 1.5))
         if promo_layer is not None:
             p = _ease(_prog(lt, 0.9, 0.35))
             _put(fr, promo_layer, SAFE_L, promo_y + 60 * (1 - p), alpha=p)
@@ -1541,7 +1685,7 @@ def make_video_fast(data, date_str, out, platform="youtube"):
         if lt < 0.3:
             wipe(d, _lerp(0.5, 1.0, _ease(_prog(lt, 0.0, 0.3))), PINK, INK)
         if t > T_END_ - 0.3:  # wipe out so the loop lands cleanly on the question again
-            wipe(d, _lerp(0.0, 0.5, _prog(t, T_END_ - 0.3, 0.3)), INK, PINK)
+            wipe(d, _lerp(0.0, 0.5, _ease_in2(_prog(t, T_END_ - 0.3, 0.3))), INK, PINK)
         return fr
 
     pops = [0.5 + 0.25 * i for i in range(len(choices))]
@@ -1551,7 +1695,8 @@ def make_video_fast(data, date_str, out, platform="youtube"):
 
     def camera(t):
         # slow push-in on each screen (the jump between screens is hidden by the wipe) plus the kicks
-        base = 0.02 * _prog(t, 0.0, T_ANS_) if t < T_ANS_ else 0.012 * _prog(t, T_ANS_, T_END_ - T_ANS_)
+        base = (0.02 * _ease_io(_prog(t, 0.0, T_ANS_)) if t < T_ANS_
+                else 0.012 * _ease_io(_prog(t, T_ANS_, T_END_ - T_ANS_)))
         return 1 + base + _kick(t, kicks)
 
     tmpdir = tempfile.mkdtemp(prefix="shortfast_")
@@ -1561,7 +1706,7 @@ def make_video_fast(data, date_str, out, platform="youtube"):
     mp4 = os.path.join(out, name)
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-           "-i", wav, "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
+           "-i", wav, "-c:v", "libx264", "-preset", "medium", "-crf", "17", "-pix_fmt", "yuv420p",
            "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", mp4]
     proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     try:
@@ -1582,6 +1727,8 @@ def main():
     want_video = "--video" in args
     if want_video:
         args.remove("--video")
+    if "--tiktok-video" in args:
+        args.remove("--tiktok-video")
     fmt = "both"
     if "--format" in args:
         i = args.index("--format")
@@ -1632,7 +1779,8 @@ def main():
     if want_video:
         written.append(make_video_fast(data, date_str, out, "youtube"))
         written.append(make_video(data, date_str, out, "youtube"))
-        written.append(make_video(data, date_str, out, "tiktok"))
+        if "--tiktok-video" in sys.argv:  # TikTok posts the slides since Oct 22, 2026
+            written.append(make_video(data, date_str, out, "tiktok"))
     print("wrote", ", ".join(written), "to", out)
 
 
