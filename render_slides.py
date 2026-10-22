@@ -8,6 +8,8 @@ Usage:
 and short_tiktok.mp4: the same video ending on a "Follow" card instead of "Subscribe"
 (hook, question, choices with a 5-second countdown, reveal with confetti, answer, subscribe card).
 Screen times scale with the amount of text, at about 3 words per second.
+It also writes short_fast.mp4: a ~15-second Short with no intro (question and choices on screen
+from the first second, 3-2-1 countdown, reveal at ~7-9 s, answer, subscribe nudge).
 Needs ffmpeg with libx264.
 
 Formats (default: both):
@@ -24,6 +26,8 @@ trivia.json:
   "choices": ["2", "47", "312", "..."],# 0 or 2-4 short options (A-D); [] for open-ended
   "answer": "Just 2 games",            # short headline answer (include the letter if multiple choice)
   "answer_detail": "...",              # 1-2 sentences of backstory
+  "question_short": "...",             # optional: <=16-word hook version for short_fast.mp4
+  "answer_short": "...",               # optional: <=16-word backstory for short_fast.mp4
   "source": "Baseball-Reference",      # short source name for the slide
   "promo_tag": "Free tote bag this weekend",  # optional: short label on slide 1 and the promo box title
   "promo": "Say this answer at the register..."  # optional: one sentence shown in a box on slide 3
@@ -1060,6 +1064,399 @@ def make_video(data, date_str, out, platform="youtube"):
     return name
 
 
+# ----------------------------------------------------------------------------
+# 15-second Short (short_fast.mp4), added Oct 21, 2026 for a one-week test against short.mp4.
+# YouTube showed viewers leaving after 1-4 seconds of the ~45-second Short, so this one has
+# no branded intro: the question is readable on the very first frame, the choices land
+# within a second, a 3-2-1 countdown runs into the reveal at ~7-9 s, then the answer and
+# a subscribe nudge, ending around 13-16 s. It loops cleanly back to the question.
+# Uses "question_short" / "answer_short" when trivia.json has them (short hook versions),
+# else the full question and the first sentence of answer_detail.
+# ----------------------------------------------------------------------------
+
+def _synth_audio_fast(path, total, t_cd, t_rev, t_ans):
+    import numpy as np
+    import wave
+    sr = 44100
+    n = int(sr * total)
+    mix = np.zeros(n)
+    rng = np.random.default_rng(5)
+
+    def tt(d):
+        return np.arange(int(sr * d)) / sr
+
+    def add(sig, at, gain):
+        i = int(at * sr)
+        if i >= n or i < 0:
+            return
+        j = min(n, i + len(sig))
+        mix[i:j] += gain * sig[:j - i]
+
+    def kick():
+        x = tt(0.3)
+        f = 50 + 120 * np.exp(-x * 34)
+        return np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-x * 11)
+
+    def hat():
+        x = tt(0.04)
+        return np.diff(rng.standard_normal(len(x)), prepend=0) * np.exp(-x * 100)
+
+    def bass(freq, d=0.2):
+        x = tt(d)
+        s = np.sin(2 * np.pi * freq * x) + 0.35 * np.sin(4 * np.pi * freq * x)
+        return np.tanh(1.6 * s) * np.minimum(1, x * 200) * np.exp(-x * 8)
+
+    def noise_sweep(d, up=True):
+        x = tt(d)
+        u = x / d
+        nz = rng.standard_normal(len(x))
+        out, acc = np.zeros_like(nz), 0.0
+        for i in range(len(nz)):
+            k = 0.02 + 0.5 * (u[i] if up else 1 - u[i]) ** 2
+            acc += k * (nz[i] - acc)
+            out[i] = acc
+        return out * np.sin(np.pi * u) ** 2
+
+    def boom():
+        x = tt(0.7)
+        f = 35 + 60 * np.exp(-x * 9)
+        return np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-x * 4.5)
+
+    def tick(freq):
+        x = tt(0.09)
+        return np.sin(2 * np.pi * freq * x) * np.exp(-x * 40)
+
+    def bell(freq, d=1.2):
+        x = tt(d)
+        return (np.sin(2 * np.pi * freq * x) + 0.4 * np.sin(2 * np.pi * freq * 2.01 * x)) * np.exp(-x * 3.2)
+
+    def riser(d):
+        x = tt(d)
+        f = 220 * (4 ** (x / d))
+        return np.sin(2 * np.pi * np.cumsum(f) / sr) * (x / d) ** 2 * 0.6
+
+    beat = 60 / 128
+    roots = [110.0, 87.31, 130.81, 98.0]
+    t, k = 0.0, 0
+    while t < total - 0.2:
+        if not (t_rev - 0.05 <= t < t_ans):
+            soft = t >= t_ans
+            add(kick(), t, 0.5 if soft else 0.8)
+            add(hat(), t + beat / 2, 0.09 if soft else 0.13)
+            root = roots[(k // 4) % 4]
+            add(bass(root), t, 0.2 if soft else 0.28)
+            add(bass(root * 2 if k % 2 else root), t + beat / 2, 0.12 if soft else 0.17)
+        t += beat
+        k += 1
+    add(boom(), 0.0, 0.8)
+    add(noise_sweep(0.35, up=False), 0.0, 0.45)
+    for i in range(3):
+        add(tick(1320 if i == 2 else 990), t_cd + i, 0.5)
+    add(riser(t_rev - t_cd), t_cd, 0.16)
+    add(boom(), t_rev, 0.75)
+    for i, f in enumerate((1046.5, 1318.5, 1568.0, 2093.0)):
+        add(bell(f), t_rev + 0.02 + i * 0.07, 0.22)
+    add(noise_sweep(0.45), t_ans - 0.3, 0.45)
+    add(noise_sweep(0.35), total - 0.38, 0.4)
+    fade = np.ones(n)
+    kf = int(sr * 0.35)
+    fade[-kf:] = np.linspace(1, 0, kf)
+    mix = np.tanh(mix * 1.1) * fade
+    mix = mix / (np.max(np.abs(mix)) + 1e-9) * 0.89
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(sr)
+        w.writeframes((mix * 32767).astype(np.int16).tobytes())
+
+
+def make_video_fast(data, date_str, out, platform="youtube"):
+    import math
+    import shutil
+    import subprocess
+    import tempfile
+
+    if not shutil.which("ffmpeg"):
+        raise SystemExit("ffmpeg not found; cannot render short_fast.mp4")
+    configure("tiktok")
+    sport = data["sport"]
+    choices = [c for c in (data.get("choices") or []) if str(c).strip()][:4]
+    m = re.match(r"\s*([A-Da-d])\s*[:.)\-–]", data["answer"])
+    correct = "ABCD".index(m.group(1).upper()) if (m and choices and "ABCD".index(m.group(1).upper()) < len(choices)) else None
+    qtext = (data.get("question_short") or data["question"]).strip()
+    detail = (data.get("answer_short") or "").strip()
+    if not detail:
+        full = (data.get("answer_detail") or "").strip()
+        parts = re.split(r"(?<=[.!?])\s+(?=[A-Z0-9“\"])", full)
+        detail = parts[0] if parts else full
+    headline = re.sub(r"^\s*[A-Da-d]\s*[:.)\-–]\s*", "", data["answer"]).strip() if correct is not None else data["answer"]
+
+    # ---------- timing: sized to the words on screen, ~3.6 words per second ----------
+    words = len(qtext.split()) + sum(len(str(c).split()) for c in choices)
+    T_REV_ = min(9.5, max(6.0, _half(1.8 + words / 3.6)))
+    T_CD_ = T_REV_ - 3.0
+    T_ANS_ = T_REV_ + 1.2
+    a_words = len(headline.split()) + len(detail.split())
+    T_END_ = T_ANS_ + min(5.5, max(3.8, _half(1.6 + a_words / 3.6)))
+
+    # ---------- question + choices screen (black) ----------
+    # header without the date, so the countdown ring never sits on top of it
+    hdr_d, hdx, hdy, top = _header_layer("", sport, True)
+    ring_cx, ring_cy = SAFE_R - 92, SAFE_T + 60
+    bar_y = SAFE_B - 34
+    region_top, region_bot = top + 50, bar_y - 46
+    badge, gap = 92, 22
+    text_w = TEXT_W - badge - 30 - 60
+    n_ch = len(choices)
+    ask = ("Comment " + ", ".join("ABCD"[:n_ch - 1]) + " or " + "ABCD"[n_ch - 1]) if n_ch > 1 else "Comment your guess"
+    ask_layer = _layer(ask, font(BOLD, 46), PINK)
+    ask_h, ask_gap = ask_layer.height - 12, 26
+
+    def choice_sizes(size):
+        cf_ = font(BOLD, size)
+        lh_ = int(size * 1.15)
+        hs = [max(badge + 32, len(wrap(str(c), cf_, text_w)) * lh_ + 40) for c in choices]
+        return cf_, lh_, hs, sum(hs) + gap * max(0, n_ch - 1)
+
+    # top-down: question, "Comment A, B or C", choices; the block is centered in the free space.
+    # Shrink the choices first, then the question, until everything fits above the time bar.
+    size, q_min = 56, 52
+    while True:
+        cf, lh, heights, ch_total = choice_sizes(size) if choices else (None, 0, [], 0)
+        below = (ask_gap + ask_h + ask_gap + ch_total) if choices else 220
+        qf, qlines, qlh, qtotal = fit(qtext, BOLD, TEXT_W, region_bot - region_top - below, 104, q_min)
+        if qtotal + below <= region_bot - region_top or (size <= 36 and q_min <= 40):
+            break
+        if size > 36:
+            size -= 2
+        else:
+            q_min -= 4
+    block = qtotal + below
+    qy = region_top + max(0, (region_bot - region_top - block) // 2)
+    ask_y = qy + qtotal + ask_gap
+    ch_top = ask_y + ask_h + ask_gap
+    if ch_top + ch_total > region_bot:  # last resort: drop the comment line
+        ask_layer = None
+        ch_top = qy + qtotal + ask_gap
+    q_layers = [_rich_layer(l, qf, CREAM, PINK) for l in qlines]
+    boxes, boxes_ok = [], []
+    if choices:
+        bf = font(BOLD, 50)
+        check = _check_badge(badge)
+        for i, c in enumerate(choices):
+            bh = heights[i]
+            for ok in (False, True):
+                im = Image.new("RGBA", (TEXT_W + 1, bh + 1), (0, 0, 0, 0))
+                d = ImageDraw.Draw(im)
+                d.rounded_rectangle([0, 0, TEXT_W, bh], radius=26, fill=MINT if ok else WHITE,
+                                    outline=INK, width=7 if ok else 5)
+                bx, by = 24 + badge // 2, bh // 2
+                if ok:
+                    im.paste(check, (bx - badge // 2, by - badge // 2), check)
+                else:
+                    d.ellipse([bx - badge // 2, by - badge // 2, bx + badge // 2, by + badge // 2],
+                              fill=PINK if i % 2 == 0 else MINT, outline=INK, width=4)
+                    d.text((bx, by), "ABCD"[i], font=bf, fill=INK, anchor="mm")
+                ls = wrap(str(c), cf, text_w)
+                ty = (bh - len(ls) * lh) // 2
+                for j, line in enumerate(ls):
+                    d.text((24 + badge + 30, ty + j * lh), line, font=cf, fill=INK)
+                (boxes_ok if ok else boxes).append(im)
+    box_pos, y = [], ch_top
+    for bh in heights:
+        box_pos.append((SAFE_L, y))
+        y += bh + gap
+    # the reveal line takes the comment line's place, at a size that fits that slot
+    title_rev = _layer(f"It’s {'ABCD'[correct]}!" if correct is not None else "Time’s up!", font(BOLD, 62), MINT)
+    confetti_ch = None
+    if correct is not None:
+        bx, by = box_pos[correct]
+        confetti_ch = _confetti(11, bx + 120, by + heights[correct] // 2, 90)
+    open_reveal = None
+    if not choices:
+        of, olines, olh, ototal = fit(headline, BOLD, TEXT_W, 360, 140, 70, spacing=1.05)
+        open_reveal = Image.new("RGBA", (TEXT_W + 12, ototal + 40), (0, 0, 0, 0))
+        draw_lines(ImageDraw.Draw(open_reveal), 6, 6, olines, of, olh, MINT)
+        confetti_ch = _confetti(11, W // 2, qy + qtotal + 200, 100, cols=[PINK, MINT, CREAM])
+
+    # ---------- answer screen (mint) ----------
+    wm = logo("logo_straight", INK, height=LOGO_H)
+    tmp = Image.new("RGBA", (W, 160), (0, 0, 0, 0))
+    ax2, ay2 = pill(ImageDraw.Draw(tmp), 0, 0, "THE ANSWER", font(BOLD, 30), INK, MINT)
+    ans_pill = tmp.crop((0, 0, int(ax2) + 1, int(ay2) + 1))
+    ay = SAFE_T + LOGO_H + LOGO_GAP + ans_pill.height + 50
+    src_y = SAFE_B - 150
+    promo = data.get("promo")
+    promo_layer, promo_y, content_bottom = None, 0, src_y - 10
+    if promo:
+        pad = 26
+        pf = font(MEDIUM, 32)
+        plines = wrap(promo, pf, TEXT_W - 2 * pad)
+        plh = int(32 * 1.28)
+        box_h = pad + 36 + 12 + plh * len(plines) + pad - 6
+        promo_y = src_y - 26 - box_h
+        promo_layer = Image.new("RGBA", (TEXT_W + 1, box_h + 1), (0, 0, 0, 0))
+        d = ImageDraw.Draw(promo_layer)
+        d.rounded_rectangle([0, 0, TEXT_W, box_h], radius=22, fill=INK)
+        tracked(d, (pad, pad), (data.get("promo_tag") or "In store").upper(), font(BOLD, 28), PINK, tracking=2)
+        draw_lines(d, pad, pad + 48, plines, pf, plh, CREAM)
+        content_bottom = promo_y - 10
+    avail = content_bottom - 40 - ay
+    af, alines, alh, _ = fit(headline, BOLD, TEXT_W, int(avail * 0.5), 160, 72, spacing=1.05)
+    a_layers = [_layer(l, af, INK) for l in alines]
+    rule_y = ay + alh * len(alines) + af.getmetrics()[1] + 20
+    det_y = rule_y + 46
+    df, dlines, dlh, _ = fit(detail, MEDIUM, TEXT_W, content_bottom - 30 - det_y, 54, 34, spacing=1.3)
+    d_layers = [_layer(l, df, INK) for l in dlines]
+    src_layer = _layer(f"Source: {data['source']}", font(MEDIUM, 30), INK) if data.get("source") else None
+    nudge_txt = "Follow for a new one daily" if platform == "tiktok" else "Subscribe for a new one daily"
+    nf = font(BOLD, 40)
+    icon = _emoji_img("\U0001F514", 46)
+    nw = int(nf.getlength(nudge_txt)) + 64 + (icon.width + 16 if icon is not None else 0)
+    nudge = Image.new("RGBA", (nw, 84), (0, 0, 0, 0))
+    nd = ImageDraw.Draw(nudge)
+    nd.rounded_rectangle([0, 0, nw - 1, 83], radius=42, fill=INK)
+    nx = 32
+    if icon is not None:
+        nudge.paste(icon, (nx, (84 - icon.height) // 2), icon)
+        nx += icon.width + 16
+    nd.text((nx, 43), nudge_txt, font=nf, fill=CREAM, anchor="lm")
+    nudge_y = SAFE_B - 84
+    confetti_ans = _confetti(23, W // 2, ay + 40, 100, spread=1100, up=1700, cols=[INK, CREAM, WHITE])
+
+    def stripes_at(d, colors, slide):
+        off = int((1 - _ease(slide)) * 420)
+        for i, col in enumerate(colors):
+            o = 150 + i * 44 - off
+            d.polygon([(W - o - 34, 0), (W - o, 0), (W, o), (W, o + 34)], fill=col)
+
+    def wipe(d, u, lead_c=PINK, trail_c=MINT):
+        lead = _lerp(-0.1 * W, 3.5 * W, u)
+        skew = 0.45 * W
+        for x0, x1, col in ((lead - 2.0 * W, lead, CREAM), (lead - 70, lead, lead_c),
+                            (lead - 2.0 * W, lead - 2.0 * W + 70, trail_c)):
+            d.polygon([(x0, 0), (x1, 0), (x1 - skew, H), (x0 - skew, H)], fill=col)
+
+    def frame_at(t):
+        if t < T_ANS_:  # ------------------------------------- question, choices, countdown, reveal
+            fr = Image.new("RGB", (W, H), BLACK)
+            d = ImageDraw.Draw(fr)
+            stripes_at(d, [PINK, MINT, CREAM], 1)
+            fr.paste(hdr_d, (hdx, hdy), hdr_d)
+            revealing = t >= T_REV_
+            rp = _prog(t, T_REV_, 0.35)
+            # the question is fully readable on frame 0; it only settles from a slight zoom
+            qs = _lerp(1.05, 1.0, _ease(_prog(t, 0.0, 0.35)))
+            for i, ly in enumerate(q_layers):
+                _put(fr, ly, SAFE_L - 6, qy + i * qlh - 6, scale=qs,
+                     alpha=1.0 - (0.25 * rp if revealing else 0))
+            if choices:
+                if not revealing:
+                    if ask_layer is not None:
+                        _put(fr, ask_layer, SAFE_L - 6, ask_y - 6, alpha=_prog(t, 0.9, 0.3))
+                else:
+                    s = _back(rp, 2.6)
+                    _put(fr, title_rev, SAFE_L - 6, ch_top - ask_gap - title_rev.height + 18,
+                         alpha=min(1, s * 1.4), scale=_lerp(0.6, 1, s))
+            for i, im in enumerate(boxes):
+                bx, by = box_pos[i]
+                p = _ease(_prog(t, 0.25 + i * 0.15, 0.3))
+                x = bx + (1 - p) * 700
+                if revealing and correct is not None:
+                    if i == correct:
+                        pop = 1 + 0.08 * math.sin(math.pi * _prog(t, T_REV_, 0.45))
+                        _put(fr, boxes_ok[i], x, by, alpha=rp, scale=pop)
+                        if rp < 1:
+                            _put(fr, im, x, by, alpha=1 - rp)
+                    else:
+                        _put(fr, im, x - 20 * rp, by, alpha=1 - 0.65 * rp)
+                else:
+                    _put(fr, im, x, by, alpha=p)
+            if open_reveal is not None and revealing:
+                s = _back(_prog(t, T_REV_ + 0.1, 0.35), 2.2)
+                _put(fr, open_reveal, SAFE_L - 6, bar_y - 60 - open_reveal.height,
+                     alpha=min(1, s * 1.5), scale=_lerp(1.6, 1.0, min(1, s)))
+            # time bar drains the whole way to the reveal; ring counts 3-2-1 at the end
+            rem_all = 1 - _prog(t, 0.0, T_REV_)
+            col = _mix(MINT, PINK, min(1, (1 - rem_all) * 1.4)) if rem_all > 0.3 else _mix(PINK, CREAM, 1 - rem_all / 0.3)
+            d.rounded_rectangle([SAFE_L, bar_y, SAFE_R, bar_y + 16], radius=8, fill=(48, 48, 48))
+            fw = int(TEXT_W * rem_all)
+            if fw > 16 and not revealing:
+                d.rounded_rectangle([SAFE_L, bar_y, SAFE_L + fw, bar_y + 16], radius=8, fill=col)
+            if t >= T_CD_ - 0.3:
+                if not revealing:
+                    rem = 1 - _prog(t, T_CD_, 3.0)
+                    num = max(1, math.ceil(rem * 3 - 1e-6))
+                    since = (t - T_CD_) % 1.0 if t >= T_CD_ else 1.0
+                    ring = _ring(rem, _mix(PINK, INK, 1 - rem) if rem < 0.5 else PINK, num,
+                                 1 + 0.45 * (1 - _ease(since / 0.3)))
+                    ap = _back(_prog(t, T_CD_ - 0.3, 0.3))
+                    _put(fr, ring, ring_cx - ring.width / 2, ring_cy - ring.height / 2, alpha=min(1, ap), scale=ap)
+                else:
+                    cb = _check_badge(150)
+                    s = _back(rp, 2.2)
+                    _put(fr, cb, ring_cx - 75, ring_cy - 75, alpha=min(1, s * 1.5), scale=s)
+            if revealing:
+                if confetti_ch is not None:
+                    _draw_confetti(d, confetti_ch, t - T_REV_)
+                if rp < 1:
+                    fr = Image.blend(fr, Image.new("RGB", (W, H), (255, 255, 255)), 0.4 * (1 - rp))
+            if t > T_ANS_ - 0.3:
+                wipe(ImageDraw.Draw(fr), _lerp(0.0, 0.5, _prog(t, T_ANS_ - 0.3, 0.3)), PINK, INK)
+            return fr
+        # ------------------------------------------------------------- answer
+        lt = t - T_ANS_
+        fr = Image.new("RGB", (W, H), MINT)
+        d = ImageDraw.Draw(fr)
+        stripes_at(d, [INK, CREAM, INK], 1)
+        hp = _ease(_prog(lt, 0.0, 0.3))
+        _put(fr, wm, SAFE_L, SAFE_T - 40 * (1 - hp), alpha=hp)
+        _put(fr, ans_pill, SAFE_L, SAFE_T + LOGO_H + LOGO_GAP - 40 * (1 - hp), alpha=hp)
+        for i, ly in enumerate(a_layers):
+            p = _prog(lt, 0.1 + i * 0.08, 0.28)
+            _put(fr, ly, SAFE_L - 6, ay + i * alh - 6, alpha=min(1, p * 1.6), scale=_lerp(1.45, 1.0, _ease(p)))
+        rw = int(170 * _ease(_prog(lt, 0.35, 0.3)))
+        if rw > 2:
+            d.rectangle([SAFE_L, rule_y, SAFE_L + rw, rule_y + 10], fill=INK)
+        for i, ly in enumerate(d_layers):
+            p = _prog(lt, 0.5 + i * 0.1, 0.3)
+            _put(fr, ly, SAFE_L - 6 + 40 * (1 - _ease(p)), det_y + i * dlh - 6, alpha=p)
+        if promo_layer is not None:
+            p = _ease(_prog(lt, 0.9, 0.35))
+            _put(fr, promo_layer, SAFE_L, promo_y + 60 * (1 - p), alpha=p)
+        if src_layer is not None:
+            _put(fr, src_layer, SAFE_L - 6, src_y - 6, alpha=_prog(lt, 1.0, 0.4))
+        s = _back(_prog(lt, 1.3, 0.4), 2.0)
+        _put(fr, nudge, SAFE_L, nudge_y, alpha=min(1, s * 1.5), scale=s)
+        _draw_confetti(d, confetti_ans, lt - 0.05)
+        if lt < 0.3:
+            wipe(d, _lerp(0.5, 1.0, _ease(_prog(lt, 0.0, 0.3))), PINK, INK)
+        if t > T_END_ - 0.3:  # wipe out so the loop lands cleanly on the question again
+            wipe(d, _lerp(0.0, 0.5, _prog(t, T_END_ - 0.3, 0.3)), INK, PINK)
+        return fr
+
+    tmpdir = tempfile.mkdtemp(prefix="shortfast_")
+    wav = os.path.join(tmpdir, "audio.wav")
+    _synth_audio_fast(wav, T_END_, T_CD_, T_REV_, T_ANS_)
+    name = "short_fast_tiktok.mp4" if platform == "tiktok" else "short_fast.mp4"
+    mp4 = os.path.join(out, name)
+    cmd = ["ffmpeg", "-y", "-loglevel", "error",
+           "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+           "-i", wav, "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
+           "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", mp4]
+    proc = subprocess.Popen(cmd, stdin=subprocess.PIPE)
+    try:
+        for i in range(int(round(T_END_ * FPS))):
+            proc.stdin.write(frame_at(i / FPS).convert("RGB").tobytes())
+    finally:
+        proc.stdin.close()
+        proc.wait()
+    shutil.rmtree(tmpdir, ignore_errors=True)
+    if proc.returncode:
+        raise SystemExit(f"ffmpeg failed to write {name}")
+    return name
+
+
 def main():
     args = sys.argv[1:]
     want_video = "--video" in args
@@ -1082,7 +1479,7 @@ def main():
     for key in ("sport", "question", "answer"):
         if not str(data.get(key, "")).strip():
             sys.exit(f"missing field: {key}")
-    for key in ("question", "answer", "answer_detail", "source", "promo_tag", "promo"):
+    for key in ("question", "question_short", "answer", "answer_short", "answer_detail", "source", "promo_tag", "promo"):
         if data.get(key):
             data[key] = smart(data[key])
     data["choices"] = [smart(c) for c in (data.get("choices") or [])]
@@ -1113,6 +1510,7 @@ def main():
             x += im.width + pad
     prev.save(os.path.join(out, "preview.png"))
     if want_video:
+        written.append(make_video_fast(data, date_str, out, "youtube"))
         written.append(make_video(data, date_str, out, "youtube"))
         written.append(make_video(data, date_str, out, "tiktok"))
     print("wrote", ", ".join(written), "to", out)
