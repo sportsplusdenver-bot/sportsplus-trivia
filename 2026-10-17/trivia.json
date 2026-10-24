@@ -1,0 +1,9 @@
+{
+  "sport": "Olympics",
+  "date": "2026-10-17",
+  "question": "Oct. 18, 1968, Mexico City: Bob Beamon's long jump flew past the range of the stadium's optical measuring device, so officials grabbed a tape. By how much did he break the world record?",
+  "choices": ["8 cm (about 3 inches)", "21 cm (about 8 inches)", "55 cm (almost 22 inches)", "1 meter (over 3 feet)"],
+  "answer": "C: 55 cm, almost 22 inches",
+  "answer_detail": "His 8.90 m first-round leap beat the 8.35 m mark shared by Ralph Boston and Igor Ter-Ovanesyan, roughly triple any earlier jump in the record. It stood for nearly 23 years.",
+  "source": "Olympics.com"
+}

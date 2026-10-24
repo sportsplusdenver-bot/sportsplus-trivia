@@ -1,0 +1,8 @@
+{"sport": "Hockey", "date": "2026-10-22",
+ "question": "37 years ago, Wayne Gretzky passed Gordie Howe's 1,850 points to become the NHL's all-time scoring leader. Howe needed 1,767 games to get there. How many did Gretzky need?",
+ "question_short": "Gordie Howe needed 1,767 games to score 1,850 points. How many did Gretzky need?",
+ "choices": ["1,104 games", "780 games", "998 games"],
+ "answer": "B: Just 780 games",
+ "answer_short": "He passed Howe on Oct. 15, 1989, in Edmonton, with 53 seconds left.",
+ "answer_detail": "Gretzky passed Howe on Oct. 15, 1989, in his 780th game. He did it against his old team in Edmonton.",
+ "source": "Hockey-Reference"}

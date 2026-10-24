@@ -1,0 +1,9 @@
+{
+  "sport": "Baseball",
+  "date": "2026-10-18",
+  "question": "Coors Field has hosted big-league games since 1995, and only one pitcher has ever thrown a no-hitter there. Who was it?",
+  "choices": ["Ubaldo Jiménez", "Hideo Nomo", "Randy Johnson", "Clayton Kershaw"],
+  "answer": "B: Hideo Nomo",
+  "answer_detail": "On a cold, rain-soaked night on Sept. 17, 1996, Nomo no-hit the Rockies for the Dodgers, pitching from the stretch most of the game. Thirty-plus seasons later, it's still the only one. Jiménez's 2010 no-no came in Atlanta.",
+  "source": "MLB.com"
+}

@@ -1,0 +1,13 @@
+{
+  "sport": "Cycling",
+  "date": "2026-10-23",
+  "question": "The 2027 Tour de France route, unveiled this week, starts in Edinburgh. Modern Tours cover about 3,400 km. How long was the longest Tour ever, back in 1926?",
+  "question_short": "Modern Tours de France cover about 3,400 km. How long was the longest ever, in 1926?",
+  "choices": ["5,745 km", "4,410 km", "7,020 km"],
+  "answer": "A: 5,745 km",
+  "answer_detail": "The 1926 Tour ran 17 brutal stages. Only 41 of 126 starters reached Paris, and winner Lucien Buysse spent over 238 hours in the saddle.",
+  "answer_short": "Just 41 of 126 starters finished; winner Lucien Buysse rode over 238 hours.",
+  "source": "Cycling Weekly",
+  "promo_tag": "Free tote bag this weekend",
+  "promo": "Say this answer at the register Friday through Sunday for a free Sports Plus tote bag. While supplies last."
+}

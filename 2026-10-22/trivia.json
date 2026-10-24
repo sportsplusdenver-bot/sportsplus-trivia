@@ -1,0 +1,11 @@
+{
+  "sport": "Hockey",
+  "date": "2026-10-22",
+  "question": "On Oct. 22, 1974, the Flyers beat the Kings 4-2 in L.A. How many straight games did Philadelphia then go without losing to Los Angeles?",
+  "question_short": "Oct. 22, 1974: Flyers beat the Kings. How many straight games until L.A. beat Philly again?",
+  "choices": ["32 games", "19 games", "11 games"],
+  "answer": "A: 32 games in a row",
+  "answer_detail": "Philadelphia's unbeaten run against Los Angeles lasted more than eight years. It finally ended on Feb. 13, 1983, when the Kings won 5-4 in Philadelphia.",
+  "answer_short": "Philly went 32 straight without a loss to L.A., until February 1983.",
+  "source": "Hockey-Reference / NHL game logs"
+}

@@ -1,0 +1,9 @@
+{
+  "sport": "Basketball",
+  "date": "2026-10-21",
+  "question": "54 years ago today, one night after scoring an NBA-record 58 points in a single quarter at Boston, the Buffalo Braves faced Milwaukee. How many points did they score in the third quarter?",
+  "choices": ["4", "11", "16", "22"],
+  "answer": "A: Just 4 points",
+  "answer_detail": "That set a new NBA low for a quarter, and Buffalo lost 91-63. Dallas later dipped even further, managing only 2 points in a quarter against the Lakers in 1997.",
+  "source": "NBA.com history"
+}
