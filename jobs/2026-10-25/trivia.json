@@ -1,0 +1,11 @@
+{
+  "sport": "Baseball",
+  "date": "2026-10-25",
+  "question": "In 2007 the Rockies won 21 of 22 games to reach their first World Series, sweeping the NLCS. Then they had to wait. How many days off did they get before Game 1?",
+  "question_short": "The 2007 Rockies won 21 of 22 to reach the World Series. How long was their layoff?",
+  "choices": ["3 days", "8 days", "13 days"],
+  "answer": "B: 8 days",
+  "answer_detail": "Colorado swept Arizona on Oct. 15 and sat idle until Oct. 24. The red-hot Rockies looked rusty, lost Game 1 13-1 at Fenway, and Boston swept the Series.",
+  "answer_short": "They clinched Oct. 15, waited until Oct. 24, then got swept by Boston.",
+  "source": "SABR Games Project"
+}
