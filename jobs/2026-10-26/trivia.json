@@ -1,0 +1,11 @@
+{
+  "sport": "Baseball",
+  "date": "2026-10-26",
+  "question": "The 2005 White Sox clinched their first World Series title in 88 years on Oct. 26. In the five-game ALCS before it, how many outs did their bullpen record?",
+  "question_short": "2005 White Sox, five-game ALCS. How many outs did their bullpen record?",
+  "choices": ["11 outs", "Just 2 outs", "23 outs"],
+  "answer": "B: Just 2 outs",
+  "answer_detail": "After Game 1, Buehrle, Garland, Garcia and Contreras threw four straight complete games. Neal Cotts got the only two relief outs, in Game 1. No team had won four straight postseason games without a reliever since the 1928 Yankees.",
+  "answer_short": "Four straight complete games; Neal Cotts got the only two relief outs, in Game 1.",
+  "source": "SABR Games Project, MLB.com"
+}
