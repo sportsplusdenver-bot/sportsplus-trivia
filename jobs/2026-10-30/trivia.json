@@ -1,0 +1,13 @@
+{
+  "sport": "Cycling",
+  "date": "2026-10-30",
+  "question": "French legend Raymond Poulidor finished on the Tour de France podium eight times between 1962 and 1976. How many days did he spend in the yellow jersey?",
+  "question_short": "Raymond Poulidor made the Tour de France podium 8 times. How many days in yellow?",
+  "choices": ["Not a single day", "11 days", "26 days"],
+  "answer": "A: Not a single day",
+  "answer_detail": "\"Poupou\" was second three times and third five times but never led the Tour. His grandson Mathieu van der Poel finally took yellow for the family in 2021.",
+  "answer_short": "Never led the Tour; grandson Mathieu van der Poel took yellow in 2021.",
+  "source": "Cyclingnews",
+  "promo_tag": "Free tote bag this weekend",
+  "promo": "Say this answer at the register Friday through Sunday for a free Sports Plus tote bag. While supplies last."
+}
