@@ -1,0 +1,11 @@
+{
+  "sport": "Football",
+  "date": "2026-10-27",
+  "question": "Emmitt Smith passed Walter Payton as the NFL's all-time rushing leader 24 years ago today. How many straight 1,000-yard seasons had he strung together by then?",
+  "question_short": "Emmitt Smith became the NFL's rushing king 24 years ago today. How many straight 1,000-yard seasons?",
+  "choices": ["7 straight seasons", "9 straight seasons", "11 straight seasons"],
+  "answer": "C: 11 straight, an NFL record",
+  "answer_detail": "Smith topped 1,000 yards every year from 1991 to 2001, still the NFL record. The streak ended in 2002, the very season he passed Payton, when he finished just 25 yards short.",
+  "answer_short": "An NFL record from 1991 to 2001. It ended in 2002, just 25 yards short.",
+  "source": "Pro Football Hall of Fame"
+}

@@ -1,0 +1,11 @@
+{
+  "sport": "Hockey",
+  "date": "2026-10-29",
+  "question": "56 years ago today, Gordie Howe became the first NHL player to reach 1,000 career assists. Which of his NHL seasons was he playing at the time?",
+  "question_short": "Gordie Howe was the NHL's first player to 1,000 assists. Which NHL season was he in?",
+  "choices": ["His 16th season", "His 20th season", "His 25th season"],
+  "answer": "C: His 25th season",
+  "answer_detail": "Howe was 42 and in his 25th straight season with Detroit (1970-71). He still wasn't done: he later played six WHA seasons and came back to the NHL at 51 with Hartford.",
+  "answer_short": "Howe was 42, in his 25th Detroit season, and later returned to the NHL at 51.",
+  "source": "NHL.com / Hockey-Reference"
+}

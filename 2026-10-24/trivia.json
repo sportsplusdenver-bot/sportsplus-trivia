@@ -1,0 +1,11 @@
+{
+  "sport": "Racing",
+  "date": "2026-10-24",
+  "question": "The first U.S. Grand Prix (Sebring, 1959) decided the world title. Jack Brabham's car ran out of fuel on the final lap, so he got out and pushed it to the line. Where did he finish?",
+  "question_short": "1959: Brabham ran dry on the last lap and pushed his car in. Where'd he finish?",
+  "choices": ["Last place", "4th place", "2nd place"],
+  "answer": "B: 4th, and he won the title",
+  "answer_detail": "Brabham started light on fuel to save weight, ran dry about 400 yards from the flag and pushed his Cooper uphill alone. Fourth clinched his first world title, while teammate Bruce McLaren, 22, won the race.",
+  "answer_short": "He pushed his Cooper about 400 yards alone, and fourth clinched his first world title.",
+  "source": "National Museum of Australia"
+}

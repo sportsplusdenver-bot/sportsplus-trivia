@@ -1,0 +1,11 @@
+{
+  "sport": "Basketball",
+  "date": "2026-10-28",
+  "question": "In November 1950, the Fort Wayne Pistons stalled their way past George Mikan's Lakers in the lowest-scoring game in NBA history. How many field goals did both teams make combined?",
+  "question_short": "Lowest-scoring NBA game ever, 1950: Pistons 19, Lakers 18. How many field goals combined?",
+  "choices": ["22 field goals", "15 field goals", "8 field goals"],
+  "answer": "C: Just 8 field goals",
+  "answer_detail": "Fort Wayne won 19-18, going 4 of 13 from the field while Minneapolis went 4 of 18. Stall-ball games like this led the NBA to add the 24-second shot clock in 1954.",
+  "answer_short": "Each team made just 4. Games like this brought the 24-second shot clock in 1954.",
+  "source": "Basketball-Reference"
+}
