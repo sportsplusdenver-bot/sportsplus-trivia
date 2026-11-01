@@ -1,0 +1,15 @@
+{
+  "sport": "Football",
+  "date": "2026-11-01",
+  "question": "The 1960 Broncos wore secondhand mustard-and-brown uniforms with vertically striped socks. In 1962 a new coach made a public show of getting rid of those socks. What did he do?",
+  "question_short": "The 1962 Broncos made a public show of ditching their striped socks. How?",
+  "choices": [
+    "Burned them in a bonfire",
+    "Auctioned them off to fans",
+    "Buried them under the field"
+  ],
+  "answer": "A: Burned them in a bonfire",
+  "answer_detail": "Coach Jack Faulkner torched the much-mocked mustard-and-brown socks at a 1962 team scrimmage in Golden as Denver switched to orange and blue. One sock survived and ended up at the Pro Football Hall of Fame.",
+  "answer_short": "Jack Faulkner torched them at a 1962 scrimmage; one survivor sits in the Hall of Fame.",
+  "source": "DenverBroncos.com"
+}
