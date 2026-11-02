@@ -1,0 +1,11 @@
+{
+  "sport": "Baseball",
+  "date": "2026-11-02",
+  "question": "Game 7 of the 2016 World Series, Nov. 2: Cubs and Indians tied 6-6 after nine, then rain stopped play and Jason Heyward called a players-only meeting. How long was that famous rain delay?",
+  "question_short": "Cubs-Indians Game 7, tied 6-6 after nine. Rain stops play. How long was the delay?",
+  "choices": ["17 minutes", "47 minutes", "1 hour, 32 minutes"],
+  "answer": "A: Just 17 minutes",
+  "answer_detail": "Heyward rallied teammates in a weight room during the short break. Chicago then scored twice in the 10th, held on 8-7 and ended a 108-year title drought.",
+  "answer_short": "Heyward's weight-room speech, then two Cubs runs in the 10th ended a 108-year drought.",
+  "source": "SABR Games Project"
+}
