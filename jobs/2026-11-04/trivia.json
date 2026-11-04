@@ -1,0 +1,11 @@
+{
+  "sport": "Basketball",
+  "date": "2026-11-04",
+  "question": "On Nov. 4, 1961, Wilt Chamberlain began a streak of straight games scoring 30 or more points. How many games in a row did it last?",
+  "question_short": "Nov. 4, 1961: Wilt Chamberlain started a streak of 30-point games. How long did it last?",
+  "choices": ["23 games", "65 games", "110 games"],
+  "answer": "B: 65 straight games",
+  "answer_detail": "Wilt's run began Nov. 4, 1961, the season he averaged 50.4 points a game. James Harden's 32 straight in 2018-19 is the closest anyone else has come.",
+  "answer_short": "Wilt scored 30+ in 65 straight games; James Harden's 32 is the next-best run.",
+  "source": "NBA.com"
+}
