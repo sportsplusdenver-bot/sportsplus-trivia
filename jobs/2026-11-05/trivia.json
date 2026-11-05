@@ -1,0 +1,11 @@
+{
+  "sport": "Hockey",
+  "date": "2026-11-05",
+  "question": "Ron Francis has 1,249 career assists, still second in NHL history behind only Wayne Gretzky. How many times was he named a First- or Second-Team NHL All-Star at season's end?",
+  "question_short": "Ron Francis ranks second all-time in NHL assists. How many times was he a season-end All-Star?",
+  "choices": ["Three times", "Never, not once", "Seven times"],
+  "answer": "B: Never, not once",
+  "answer_detail": "Francis played 23 seasons and won two Stanley Cups, a Selke and three Lady Byngs, yet in an era packed with star centers he never made a postseason All-Star team. NHL.com called him the most overlooked superstar of his era.",
+  "answer_short": "Never, despite 1,249 assists; star-packed eras kept him off every postseason All-Star team.",
+  "source": "NHL.com"
+}
