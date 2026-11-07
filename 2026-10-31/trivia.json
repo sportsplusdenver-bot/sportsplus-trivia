@@ -1,0 +1,11 @@
+{
+  "sport": "Motorsports",
+  "date": "2026-10-31",
+  "question": "This weekend's Mexico City F1 track is named for brothers Ricardo and Pedro Rodríguez. In 1961, Ricardo qualified second at Monza in his Ferrari debut. How old was he?",
+  "question_short": "Ricardo Rodríguez put a Ferrari on F1's front row in his 1961 debut. How old?",
+  "choices": ["19", "24", "28"],
+  "answer": "A: Just 19 years old",
+  "answer_detail": "At 19 years, 208 days, he was F1's youngest front-row starter until Max Verstappen in 2016. He was killed practicing at the Mexico City track on Nov. 1, 1962, at age 20.",
+  "answer_short": "He was 19, F1's youngest front-row starter until Max Verstappen in 2016.",
+  "source": "Pirelli / F1 records"
+}

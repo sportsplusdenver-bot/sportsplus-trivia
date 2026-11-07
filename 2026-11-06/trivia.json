@@ -1,0 +1,13 @@
+{
+  "sport": "Cycling",
+  "date": "2026-11-06",
+  "question": "Fausto Coppi broke cycling's Hour Record in wartime Milan on Nov. 7, 1942, 84 years ago this weekend. How far past Maurice Archambaud's 1937 mark did he ride?",
+  "question_short": "Coppi broke cycling's Hour Record in 1942. How far past the old record did he ride?",
+  "choices": ["About 750 meters", "Just 31 meters", "Over 2 kilometers"],
+  "answer": "B: Just 31 meters",
+  "answer_detail": "Coppi rode 45.798 km to Archambaud's 45.767 km on the same Milan track. His razor-thin record still stood for nearly 14 years, until Jacques Anquetil broke it in 1956.",
+  "answer_short": "Coppi rode 45.798 km, just 31 m past Archambaud, and held the record nearly 14 years.",
+  "source": "UCI Hour Record history",
+  "promo_tag": "Free tote bag this weekend",
+  "promo": "Say this answer at the register Friday through Sunday for a free Sports Plus tote bag. While supplies last."
+}

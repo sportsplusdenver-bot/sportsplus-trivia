@@ -1,0 +1,15 @@
+{
+  "sport": "Football",
+  "date": "2026-11-03",
+  "question": "On Nov. 3, 2007, Navy beat Notre Dame 46-44 in triple overtime. Before that day, how many games in a row had Navy lost to the Irish?",
+  "question_short": "Navy finally beat Notre Dame on Nov. 3, 2007. How many straight losses did that snap?",
+  "choices": [
+    "43 straight",
+    "12 straight",
+    "26 straight"
+  ],
+  "answer": "A: 43 straight games",
+  "answer_detail": "It's an NCAA record for straight losses to one opponent. Navy's previous win over the Irish came on Nov. 2, 1963, the year Navy QB Roger Staubach won the Heisman.",
+  "answer_short": "An NCAA record. Navy's last win before that came in 1963, nearly 44 years earlier.",
+  "source": "Navy Athletics"
+}
