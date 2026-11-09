@@ -1,0 +1,11 @@
+{
+  "sport": "Baseball",
+  "date": "2026-11-09",
+  "question": "On this day in 1960, Roger Maris won AL MVP over teammate Mickey Mantle, even though Mantle got more first-place votes (10 to 8). How many points did Maris win by?",
+  "question_short": "Mantle got more first-place MVP votes in 1960. How many points did Maris beat him by?",
+  "choices": ["41 points", "17 points", "Just 3 points"],
+  "answer": "C: Just 3 points",
+  "answer_detail": "Maris edged Mantle 225 to 222 on Nov. 9, 1960. Voters ranked ten players, so Maris's deeper ballot support outweighed Mantle's extra first-place votes. Maris won MVP again in 1961, his 61-homer year.",
+  "answer_short": "Maris won 225 to 222, then won MVP again in 1961, his 61-homer year.",
+  "source": "Baseball-Reference"
+}
