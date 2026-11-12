@@ -1,0 +1,11 @@
+{
+  "sport": "Hockey",
+  "date": "2026-11-12",
+  "question": "Maple Leaf Gardens opened 95 years ago today, Nov. 12, 1931, before a record 13,233 fans. In the middle of the Great Depression, how long did it take to build?",
+  "question_short": "Toronto's Maple Leaf Gardens opened Nov. 12, 1931. How long did it take to build?",
+  "choices": ["About 5 months", "About 18 months", "About 3 years"],
+  "answer": "A: About 5 months",
+  "answer_detail": "Ground broke June 1, 1931. Crews worked three eight-hour shifts a day, and to cover a $200,000 funding gap, workers took 20% of their pay in Gardens stock.",
+  "answer_short": "Ground broke June 1, 1931; crews worked around the clock in three shifts.",
+  "source": "NHL.com"
+}
