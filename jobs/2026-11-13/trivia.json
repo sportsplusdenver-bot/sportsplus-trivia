@@ -1,0 +1,13 @@
+{
+  "sport": "Cycling",
+  "date": "2026-11-13",
+  "question": "The 1904 Tour de France winner was a 19-year-old who didn't cross the line first. After officials threw out riders for cheating, including catching trains, where had Henri Cornet originally finished?",
+  "question_short": "Henri Cornet won the 1904 Tour de France at 19. Where had he actually finished?",
+  "choices": ["5th place", "12th place", "20th place"],
+  "answer": "A: 5th place",
+  "answer_detail": "Months later, cycling's governing body disqualified the top four, including first-place Maurice Garin, over cheating claims like train rides. Cornet, fifth on the road, became the youngest Tour winner ever.",
+  "answer_short": "The top four were disqualified for cheating, making 19-year-old Cornet the youngest Tour winner ever.",
+  "source": "Topend Sports",
+  "promo_tag": "Free tote bag this weekend",
+  "promo": "Say this answer at the register Friday through Sunday for a free Sports Plus tote bag. While supplies last."
+}
