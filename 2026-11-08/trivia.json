@@ -1,0 +1,11 @@
+{
+  "sport": "Football",
+  "date": "2026-11-08",
+  "question": "56 years ago today, Tom Dempsey kicked a 63-yard field goal, an NFL record. How many years passed before anyone kicked one longer?",
+  "question_short": "Tom Dempsey's 63-yard kick set the NFL record in 1970. How long until someone beat it?",
+  "choices": ["12 years", "27 years", "43 years"],
+  "answer": "C: 43 years",
+  "answer_detail": "Broncos kicker Matt Prater finally did it in Denver on Dec. 8, 2013, with a 64-yarder against Tennessee as the first half ended. Broncos great Jason Elam had only tied the 63-yard mark, back in 1998.",
+  "answer_short": "Broncos kicker Matt Prater hit a 64-yarder in Denver in December 2013.",
+  "source": "Pro Football Hall of Fame"
+}

@@ -1,0 +1,11 @@
+{
+  "sport": "Running",
+  "date": "2026-11-07",
+  "question": "The first New York City Marathon, in 1970, had 127 runners, a $1 entry fee, and never left Central Park. How many of those 127 actually made it to the finish line?",
+  "question_short": "The first NYC Marathon in 1970 had 127 runners. How many actually finished?",
+  "choices": ["112 runners", "89 runners", "Just 55 runners"],
+  "answer": "C: Just 55 runners",
+  "answer_detail": "Fewer than half finished. The course was a lower-loop lap plus four full laps of Central Park's main drive, and the whole race ran on a budget of about $1,000. Gary Muhrcke won in 2:31:39.",
+  "answer_short": "Fewer than half finished four-plus laps of Central Park on a $1,000 budget.",
+  "source": "Central Park Conservancy"
+}

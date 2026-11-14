@@ -1,0 +1,11 @@
+{
+  "sport": "Football",
+  "date": "2026-11-10",
+  "question": "On Nov. 10, 1940, Pittsburgh beat Philadelphia 7-3 without a single penalty called on either team. In all of NFL history, how many games have been completely flag-free?",
+  "question_short": "An NFL game 86 years ago today had zero penalties. How many flag-free NFL games ever?",
+  "choices": ["Just 4", "17", "52"],
+  "answer": "A: Just 4 games",
+  "answer_detail": "The Pro Football Hall of Fame counts only four NFL games with no penalties on either team, all between 1934 and 1940. That Pittsburgh-Philadelphia game at Forbes Field, 86 years ago today, was the last.",
+  "answer_short": "Only four, all from 1934 to 1940, and none since that 1940 game.",
+  "source": "Pro Football Hall of Fame"
+}
