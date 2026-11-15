@@ -1,0 +1,11 @@
+{
+  "sport": "Baseball",
+  "date": "2026-11-15",
+  "question": "In 1993 the expansion Rockies played in a football stadium and lost 95 games, yet set an MLB single-season attendance record that still stands. How many fans came?",
+  "question_short": "The 1993 Rockies lost 95 games but set MLB's attendance record. How many fans came?",
+  "choices": ["About 3.1 million", "About 4.5 million", "About 5.8 million"],
+  "answer": "B: About 4.5 million",
+  "answer_detail": "Playing at old Mile High Stadium, the Rockies drew 4,483,350 fans in year one. The Dodgers' franchise-record 2026 crowd of 4,034,219 still fell about 449,000 short.",
+  "answer_short": "4,483,350 fans at Mile High, a record nobody has topped in 33 years.",
+  "source": "Baseball-Reference, FOX Sports"
+}
