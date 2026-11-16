@@ -1,0 +1,11 @@
+{
+  "sport": "Baseball",
+  "date": "2026-11-16",
+  "question": "For one season only, 1887, walks counted as hits. St. Louis Browns slugger Tip O'Neill took full advantage. What batting average was he credited with at the time?",
+  "question_short": "In 1887, walks counted as hits. What average was Tip O'Neill credited with?",
+  "choices": [".401", ".492", ".563"],
+  "answer": "B: A staggering .492",
+  "answer_detail": "The walks-as-hits rule lasted just that one season. When record-keepers stripped the walks back out in 1969, O'Neill's official mark fell to .435, still one of the highest single-season averages in big-league history.",
+  "answer_short": "The rule lasted one season. Without the walks, his official average is .435.",
+  "source": "SABR / Baseball-Reference"
+}
