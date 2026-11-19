@@ -1,0 +1,11 @@
+{
+  "sport": "Hockey",
+  "date": "2026-11-19",
+  "question": "Nov. 19, 1929: the Pittsburgh Pirates (yes, an NHL team) beat Toronto 10-5. Something happened that night that has never happened in an NHL game since. What was it?",
+  "question_short": "Pittsburgh's NHL Pirates beat Toronto 10-5 in 1929. What happened that's never happened since?",
+  "choices": ["A goalie scored a goal", "A penalty shot was scored", "Two defensemen scored four each"],
+  "answer": "C: Two D-men scored four each",
+  "answer_detail": "Toronto's Hap Day and Pittsburgh's Johnny McKinnon, both defensemen, each scored four goals. Per NHL.com, it's the only NHL game where two defensemen did that.",
+  "answer_short": "Hap Day and Johnny McKinnon, both defensemen, scored four apiece. It's never happened again.",
+  "source": "NHL.com / Hockey-Reference"
+}
