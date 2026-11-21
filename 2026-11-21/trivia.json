@@ -1,0 +1,11 @@
+{
+  "sport": "Soccer",
+  "date": "2026-11-21",
+  "question": "Four years ago today, Gareth Bale's penalty vs. the USA was Wales' first World Cup goal in 64 years. In 1958, the last time Wales had played at a World Cup, who knocked them out?",
+  "question_short": "Wales waited 64 years between World Cup games. Who knocked them out in 1958?",
+  "choices": ["Pelé, age 17", "Just Fontaine", "Garrincha"],
+  "answer": "A: Pelé, age 17",
+  "answer_detail": "Brazil beat Wales 1-0 in the 1958 quarterfinals in Gothenburg. The lone goal was Pelé's first ever at a World Cup, making him the tournament's youngest scorer. Brazil went on to win the title.",
+  "answer_short": "Pelé's goal was his first ever at a World Cup, and Brazil went on to win it.",
+  "source": "FIFA"
+}

@@ -1,0 +1,11 @@
+{
+  "sport": "Football",
+  "date": "2026-11-17",
+  "question": "On Nov. 17, 1968, NBC cut away from Jets-Raiders to air the movie Heidi with New York up 32-29 and 65 seconds left. How many seconds of game clock did Oakland need to score two touchdowns?",
+  "question_short": "NBC left Jets-Raiders for Heidi with 65 seconds left. How long did Oakland's two TDs take?",
+  "choices": ["41 seconds", "24 seconds", "9 seconds"],
+  "answer": "C: Just 9 seconds",
+  "answer_detail": "Daryle Lamonica hit Charlie Smith for a 43-yard TD with 42 seconds left, then the Jets fumbled the kickoff and Preston Ridlehuber recovered in the end zone. Oakland won 43-32 while viewers watched Heidi.",
+  "answer_short": "A 43-yard TD, a fumbled kickoff, another TD: Oakland won 43-32 while TV showed Heidi.",
+  "source": "Pro Football Hall of Fame"
+}

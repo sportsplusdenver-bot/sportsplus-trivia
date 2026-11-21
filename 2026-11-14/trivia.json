@@ -1,0 +1,11 @@
+{
+  "sport": "Tennis",
+  "date": "2026-11-14",
+  "question": "ATP Finals week trivia: at the very first year-end Masters in Tokyo in 1970, Stan Smith and Rod Laver both finished 4-1. How was the title decided?",
+  "question_short": "1970's first ATP year-end finals: Smith and Laver both went 4-1. How was the champion decided?",
+  "choices": ["A one-set playoff final", "Head-to-head, no final played", "A coin toss"],
+  "answer": "B: Head-to-head, no final",
+  "answer_detail": "Tokyo 1970 was round robin only. Smith had beaten Laver 4-6, 6-3, 6-4 earlier in the week, and that result handed him the title and the $15,000 first prize.",
+  "answer_short": "Round robin only: Smith had beaten Laver 4-6, 6-3, 6-4 that week, so he won.",
+  "source": "ATP Tour"
+}

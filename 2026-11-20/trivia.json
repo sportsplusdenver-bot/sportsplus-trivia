@@ -1,0 +1,13 @@
+{
+  "sport": "Cycling",
+  "date": "2026-11-20",
+  "question": "The 2026 Tour de France covered about 3,333 km in 21 stages. The longest Tour ever, in 1926, had just 17 stages. How far did those riders race in total?",
+  "question_short": "This year's Tour was 3,333 km. How far was the longest Tour ever, in 1926?",
+  "choices": ["5,745 km", "4,120 km", "7,380 km"],
+  "answer": "A: 5,745 km",
+  "answer_detail": "Stages averaged about 338 km, more than double today's. The longest ran 433 km, Metz to Dunkirk. Lucien Buysse won in 238 hours, 44 minutes.",
+  "answer_short": "Stages averaged 338 km, one ran 433 km, and Lucien Buysse won in 238 hours.",
+  "source": "BikeRadar / 1926 Tour records",
+  "promo_tag": "Free tote bag this weekend",
+  "promo": "Say this answer at the register Friday through Sunday for a free Sports Plus tote bag. While supplies last."
+}

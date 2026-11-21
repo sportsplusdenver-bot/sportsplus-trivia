@@ -1,0 +1,11 @@
+{
+  "sport": "Basketball",
+  "date": "2026-11-18",
+  "question": "On Nov. 18, 1972, Tiny Archibald scored 51. That season the 6'1\" guard became the only player ever to lead the NBA in both scoring and assists. How many points per game did he average?",
+  "question_short": "Tiny Archibald led the NBA in scoring AND assists in 1972-73. How many points per game?",
+  "choices": ["24.8 points per game", "29.1 points per game", "34.0 points per game"],
+  "answer": "C: 34.0 points per game",
+  "answer_detail": "Archibald also handed out 11.4 assists a night for the Kansas City-Omaha Kings. More than 50 years later, nobody else has led the NBA in scoring and assists in the same season.",
+  "answer_short": "He also averaged 11.4 assists, a double crown nobody has matched since.",
+  "source": "NBA.com"
+}
