@@ -1,0 +1,11 @@
+{
+  "sport": "Baseball",
+  "date": "2026-11-23",
+  "question": "Hack Wilson, who died on this date in 1948, drove in 191 runs for the 1930 Cubs, still MLB's single-season record. How tall was the man who set it?",
+  "question_short": "Hack Wilson's 191 RBI in 1930 is still MLB's record. How tall was he?",
+  "choices": ["5-foot-6", "6-foot-1", "6-foot-4"],
+  "answer": "A: Just 5-foot-6",
+  "answer_detail": "Wilson packed about 190 pounds onto a 5-foot-6 frame and wore size 5½ shoes. He also hit 56 homers in 1930, and his RBI total was raised from 190 to 191 in 1999 after a box-score review.",
+  "answer_short": "Barely 5-foot-6, with size 5½ shoes, and his 191 RBI still stand.",
+  "source": "Baseball Hall of Fame"
+}
