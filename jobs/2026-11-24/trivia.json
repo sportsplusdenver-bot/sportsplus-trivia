@@ -1,0 +1,11 @@
+{
+  "sport": "Football",
+  "date": "2026-11-24",
+  "question": "On Thanksgiving Day 1929, Chicago Cardinals fullback Ernie Nevers set the NFL's oldest surviving individual record in a 40-6 rout of the Bears. How many of those 40 points did he score himself?",
+  "question_short": "Thanksgiving 1929: Cardinals beat the Bears 40-6. How many of the 40 did Ernie Nevers score?",
+  "choices": ["24 points", "All 40 points", "31 points"],
+  "answer": "B: All 40 points",
+  "answer_detail": "Nevers ran for six touchdowns and kicked four extra points at Comiskey Park. Nearly 97 years later, his 40 points remain the NFL's single-game scoring record.",
+  "answer_short": "Six rushing TDs plus four extra points. Still the NFL record nearly 97 years later.",
+  "source": "Pro Football Hall of Fame"
+}
