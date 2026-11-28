@@ -1,0 +1,11 @@
+{
+  "sport": "Skiing",
+  "date": "2026-11-28",
+  "question": "World Cup ski racing is back at Killington, Vermont this weekend. When it debuted there in 2016, it was the first World Cup race in the U.S. Northeast since what year?",
+  "question_short": "Killington brought World Cup skiing back to the Northeast in 2016. First time since when?",
+  "choices": ["1980", "2004", "1991"],
+  "answer": "C: 1991, at Waterville Valley",
+  "answer_detail": "The last one before Killington came in March 1991 at New Hampshire's Waterville Valley, where 19-year-old American Julie Parisien won the giant slalom. Killington's 2016 return drew about 30,000 fans over two days.",
+  "answer_short": "Waterville Valley, New Hampshire hosted the last one in March 1991. Julie Parisien won.",
+  "source": "U.S. Ski & Snowboard; AP"
+}
