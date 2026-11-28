@@ -1,0 +1,11 @@
+{
+  "sport": "Baseball",
+  "date": "2026-11-22",
+  "question": "In 1993 the brand-new Colorado Rockies played their home games in a football stadium, Mile High. How many fans did they draw that season, a total no MLB team has topped since?",
+  "question_short": "The 1993 expansion Rockies set MLB's all-time season attendance record. How many fans came?",
+  "choices": ["About 4.48 million", "About 3.6 million", "About 2.9 million"],
+  "answer": "A: About 4.48 million",
+  "answer_detail": "The Rockies drew 4,483,350 to Mile High Stadium in 1993, averaging 55,350 a game. Through the 2026 season it's still the record; the Dodgers' best ever is 4,034,219, set this year.",
+  "answer_short": "4,483,350 fans at Mile High in 1993, still MLB's single-season record.",
+  "source": "Baseball-Reference, MLB.com"
+}

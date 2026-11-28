@@ -1,0 +1,11 @@
+{
+  "sport": "Hockey",
+  "date": "2026-11-26",
+  "question": "The NHL was born 109 years ago today, on Nov. 26, 1917, at a Montreal hotel. What was the owners' main reason for starting a brand-new league?",
+  "question_short": "The NHL was founded 109 years ago today. Why did owners start a whole new league?",
+  "choices": ["To dodge a wartime tax", "To freeze out one owner", "To add American teams"],
+  "answer": "B: To freeze out one owner",
+  "answer_detail": "The old NHA's rules wouldn't let owners expel Toronto's feuding boss Eddie Livingstone, so they simply started a new league without him. Season one went badly too: the Wanderers' rink burned and only three teams finished.",
+  "answer_short": "Rivals couldn't expel Toronto owner Eddie Livingstone, so they formed a new league without him.",
+  "source": "Canadian Encyclopedia, NHL.com"
+}

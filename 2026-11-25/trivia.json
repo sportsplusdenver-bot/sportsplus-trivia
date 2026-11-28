@@ -1,0 +1,11 @@
+{
+  "sport": "Basketball",
+  "date": "2026-11-25",
+  "question": "On this date in 1983, Utah's Adrian Dantley sank 27 free throws against the Nuggets, one shy of Wilt's NBA record of 28. That record stood until March 2026. How many did Bam Adebayo make to break it?",
+  "question_short": "Wilt's NBA record of 28 free throws stood 64 years. How many did Bam Adebayo make?",
+  "choices": ["31 free throws", "36 free throws", "44 free throws"],
+  "answer": "B: 36 free throws",
+  "answer_detail": "Adebayo made 36 in his 83-point game against Washington on March 10, 2026. Dantley did tie Wilt's 28 in January 1984, just six weeks after his 27 against Denver.",
+  "answer_short": "Bam hit 36 in his 83-point game, smashing a record that dated to 1962.",
+  "source": "Basketball-Reference"
+}

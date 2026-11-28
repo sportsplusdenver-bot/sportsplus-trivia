@@ -1,0 +1,13 @@
+{
+  "sport": "Cycling",
+  "date": "2026-11-27",
+  "question": "The 1904 Tour de France winner wasn't crowned until four months after the race, when officials threw out riders over cheating. Where did 19-year-old champion Henri Cornet actually cross the finish?",
+  "question_short": "The 1904 Tour winner was crowned months later after cheaters were tossed. Where did he finish?",
+  "choices": ["2nd place", "3rd place", "5th place"],
+  "answer": "C: 5th place",
+  "answer_detail": "Officials disqualified the top four, including defending champ Maurice Garin, amid cheating claims. Cornet inherited the win nearly three hours behind Garin and is still the youngest Tour winner.",
+  "answer_short": "The top four were disqualified, so 19-year-old Henri Cornet inherited the win.",
+  "source": "Guinness World Records",
+  "promo_tag": "Free tote bag this weekend",
+  "promo": "Say this answer at the register Friday through Sunday for a free Sports Plus tote bag. While supplies last."
+}
